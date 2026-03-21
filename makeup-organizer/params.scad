@@ -54,6 +54,15 @@ puff_slices   = 30;
 round_r       = puff_max + 1;
 end_r         = cup_w / 2;
 
+/* --- Wall Profile (Trapezoid) --- */
+wall_reach       = puff_max; // how far the wall extends outward from the body edge
+wall_h_inner     = tray_h;  // height at inner face (connects to body)
+wall_h_outer     = tray_h;  // height at outer edge
+wall_r_inner_bot = 0;       // inner face, bottom corner radius
+wall_r_inner_top = 0;       // inner face, top corner radius
+wall_r_outer_bot = 0;       // outer face, bottom corner radius
+wall_r_outer_top = 0;       // outer face, top corner radius
+
 /* --- Decoration Selection --- */
 // "none", "columns", "bricks", "honeycomb", "fluting", "weave", "fins"
 decoration    = "none";

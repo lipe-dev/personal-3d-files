@@ -95,6 +95,29 @@ module stack_top_lip(w, d, r) {
             }
 }
 
+/* --- Wall profile: rounded trapezoid cross-section --- */
+// X = outward from body edge, Y = vertical (0 at base, bottom-aligned)
+module wall_profile(
+    reach   = wall_reach,
+    h_inner = wall_h_inner,
+    h_outer = wall_h_outer,
+    r_ib    = wall_r_inner_bot,
+    r_it    = wall_r_inner_top,
+    r_ob    = wall_r_outer_bot,
+    r_ot    = wall_r_outer_top
+) {
+    hull() {
+        if (r_ib > 0) translate([r_ib, r_ib])               circle(r=r_ib, $fn=16);
+        else          translate([0, 0])                       square([0.01, 0.01]);
+        if (r_it > 0) translate([r_it, h_inner - r_it])      circle(r=r_it, $fn=16);
+        else          translate([0, h_inner])                 square([0.01, 0.01]);
+        if (r_ot > 0) translate([reach-r_ot, h_outer - r_ot]) circle(r=r_ot, $fn=16);
+        else          translate([reach, h_outer])             square([0.01, 0.01]);
+        if (r_ob > 0) translate([reach-r_ob, r_ob])          circle(r=r_ob, $fn=16);
+        else          translate([reach, 0])                   square([0.01, 0.01]);
+    }
+}
+
 /* --- Stadium perimeter functions --- */
 
 // Get XY position on stadium perimeter
