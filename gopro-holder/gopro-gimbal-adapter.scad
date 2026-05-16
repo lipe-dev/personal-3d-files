@@ -28,7 +28,20 @@ module counterweight() {
 module clamp_body() {
     cube([body_w, body_d, body_h]);
 }
-module gopro_mount() {}
+module gopro_mount() {
+    difference() {
+        union() {
+            for (i = [0:2]) {
+                translate([i * (gp_prong_w + gp_gap), 0, 0])
+                    cube([gp_prong_w, gp_prong_d, gp_prong_h]);
+            }
+        }
+        // pin hole through all prongs along X, centered in depth and at mid-height
+        translate([-1, gp_prong_d / 2, gp_prong_h / 2])
+            rotate([0, 90, 0])
+                cylinder(d = gp_pin_d, h = gp_total_w + 2);
+    }
+}
 
 // Assembly
 translate([-body_w/2, -body_d/2, 0]) counterweight();
