@@ -22,8 +22,12 @@ gp_gap      = 2.5;  // gap between prongs
 gp_pin_d    = 5;    // pin hole diameter
 gp_total_w  = 3 * gp_prong_w + 2 * gp_gap; // 20mm
 
-module counterweight() {}
-module clamp_body() {}
+module counterweight() {
+    cube([body_w, body_d, cw_h]);
+}
+module clamp_body() {
+    cube([body_w, body_d, body_h]);
+}
 module gopro_mount() {}
 
 // Assembly
