@@ -46,4 +46,4 @@ module gopro_mount() {
 // Assembly
 translate([-body_w/2, -body_d/2, 0]) counterweight();
 translate([-body_w/2, -body_d/2, cw_h]) clamp_body();
-translate([-body_w/2 + (body_w - gp_total_w)/2, -gp_prong_d/2, cw_h + body_h]) gopro_mount();
+translate([-body_w/2 + (body_w - gp_total_w)/2, -body_d/2, cw_h + body_h]) gopro_mount();
