@@ -48,7 +48,7 @@ module phone_grip() {
 
 module connector() {
     color("SlateGray")
-        cube([gp_total_w, gp_prong_d, connector_h]);
+        cube([gp_total_w, gp_prong_d, connector_h + corner_r]);
 }
 
 module prong() {
