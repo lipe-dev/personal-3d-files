@@ -15,6 +15,8 @@ connector_h = 8; // height (mm)
 weight_w = 71.8;
 weight_d = 33.4;
 weight_h = 44.9;
+
+corner_r = 3;    // rounding radius for grip and weight block (mm)
 /* ========================================================== */
 
 // --- GoPro mount (fixed standard dims) ---
@@ -26,14 +28,22 @@ gp_pin_d    = 5;    // pin hole diameter
 gp_pin_z    = 6.5;  // pin hole center height from prong base
 gp_total_w  = 3 * gp_prong_w + 2 * gp_gap; // 14mm
 
+module rounded_box(w, d, h, r) {
+    translate([r, r, r])
+    minkowski() {
+        cube([w - 2*r, d - 2*r, h - 2*r]);
+        sphere(r, $fn = 24);
+    }
+}
+
 module weight_block() {
     color("Gray")
-        cube([weight_w, weight_d, weight_h]);
+        rounded_box(weight_w, weight_d, weight_h, corner_r);
 }
 
 module phone_grip() {
     color("SteelBlue")
-        cube([grip_w, gp_prong_d, grip_h]);
+        rounded_box(grip_w, gp_prong_d, grip_h, corner_r);
 }
 
 module connector() {
