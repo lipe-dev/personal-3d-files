@@ -1,18 +1,20 @@
 // GoPro Gimbal Adapter
-// Bottom: counterweight block | Middle: gimbal clamp body | Top: GoPro 3-prong mount
+// Bottom: counterweight | Lower clamp body | Upper clamp body | Top: GoPro 3-prong mount
 
 $fn = 64;
 
 /* ===================== CONFIGURE HERE ===================== */
-body_w          = 75;      // gimbal clamp width (mm)
-body_d          = 12;      // thickness gimbal grips (mm)
-body_h          = 55;      // clamp zone height (mm)
+body_d          = 12;      // depth (thickness gimbal grips, shared)
+body_bot_w      = 75;      // lower section width (mm)
+body_bot_h      = 55;      // lower section height (mm)
+body_top_w      = 40;      // upper section width (mm)
+body_top_h      = 60;      // upper section height (mm)
 target_weight_g = 100;     // counterweight target mass (g)
 pla_density     = 0.00124; // g/mm³ at 100% infill
 /* ========================================================== */
 
 // --- Derived ---
-cw_h = target_weight_g / (body_w * body_d * pla_density);
+cw_h = target_weight_g / (body_bot_w * body_d * pla_density);
 
 // --- GoPro mount (fixed standard dims) ---
 gp_prong_w  = 3;    // prong thickness (stacking direction)
@@ -24,11 +26,20 @@ gp_pin_z    = 6.5;  // pin hole center height from prong base
 gp_total_w  = 3 * gp_prong_w + 2 * gp_gap; // 14mm
 
 module counterweight() {
-    cube([body_w, body_d, cw_h]);
+    color("Gray")
+        cube([body_bot_w, body_d, cw_h]);
 }
-module clamp_body() {
-    cube([body_w, body_d, body_h]);
+
+module clamp_bottom() {
+    color("SteelBlue")
+        cube([body_bot_w, body_d, body_bot_h]);
 }
+
+module clamp_top() {
+    color("Coral")
+        cube([body_top_w, body_d, body_top_h]);
+}
+
 module prong() {
     union() {
         cube([gp_prong_w, gp_prong_d, gp_prong_h - gp_prong_d / 2]);
@@ -54,6 +65,7 @@ module gopro_mount() {
 }
 
 // Assembly
-translate([-body_w/2, -body_d/2, 0]) counterweight();
-translate([-body_w/2, -body_d/2, cw_h]) clamp_body();
-translate([-body_w/2 + (body_w - gp_total_w)/2, -body_d/2, cw_h + body_h]) gopro_mount();
+translate([-body_bot_w/2, -body_d/2, 0])                          counterweight();
+translate([-body_bot_w/2, -body_d/2, cw_h])                       clamp_bottom();
+translate([-body_top_w/2, -body_d/2, cw_h + body_bot_h])          clamp_top();
+translate([-gp_total_w/2,  -body_d/2, cw_h + body_bot_h + body_top_h]) gopro_mount();
