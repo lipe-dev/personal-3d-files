@@ -70,10 +70,10 @@ module gopro_mount() {
 // Assembly — all centered on X=0, each section centered on its own Y depth
 z0 = 0;
 z1 = z0 + weight_h;
-z2 = z1 + grip_h;
-z3 = z2 + connector_h;
+z2 = z1 + connector_h;
+z3 = z2 + grip_h;
 
 translate([-weight_w/2,    -weight_d/2,    z0]) weight_block();
-translate([-grip_w/2,      -grip_d/2,      z1]) phone_grip();
-translate([-gp_total_w/2,  -gp_prong_d/2,  z2]) connector();
+translate([-gp_total_w/2,  -gp_prong_d/2,  z1]) connector();
+translate([-grip_w/2,      -grip_d/2,      z2]) phone_grip();
 translate([-gp_total_w/2,  -gp_prong_d/2,  z3]) gopro_mount();
