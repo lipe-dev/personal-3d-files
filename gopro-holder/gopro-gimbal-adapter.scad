@@ -48,7 +48,7 @@ module phone_grip() {
 
 module connector() {
     color("SlateGray")
-        cube([gp_total_w, gp_prong_d, connector_h + corner_r]);
+        cube([gp_total_w, gp_prong_d, connector_h + 2*corner_r]);
 }
 
 module prong() {
@@ -87,6 +87,6 @@ z2 = z1 + connector_h;
 z3 = z2 + grip_h;
 
 translate([-weight_w/2,   0, z0]) weight_block();
-translate([-gp_total_w/2, 0, z1]) connector();
+translate([-gp_total_w/2, 0, z1 - corner_r]) connector();
 translate([-grip_w/2,     0, z2]) phone_grip();
 translate([-gp_total_w/2, 0, z3]) gopro_mount();
