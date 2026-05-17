@@ -27,12 +27,12 @@ echo("weight block estimated g =", weight_solid_vol * 0.00124);
 
 // --- GoPro mount (fixed standard dims) ---
 gp_prong_w  = 3;    // prong thickness (stacking direction)
-gp_prong_d  = 9;    // prong depth (width of each tab)
-gp_prong_h  = 13;   // prong height
-gp_gap      = 2.5;  // gap between prongs
-gp_pin_d    = 5;    // pin hole diameter
-gp_pin_z    = 6.5;  // pin hole center height from prong base
-gp_total_w  = 3 * gp_prong_w + 2 * gp_gap; // 14mm
+gp_prong_d  = 15;   // prong depth — GoPro standard outer diameter
+gp_prong_h  = 17;   // prong height — GoPro standard minimum
+gp_gap      = 3.5;  // gap between prongs — GoPro standard slit width
+gp_pin_d    = 5;    // pin hole diameter (M5)
+gp_pin_z    = 8.5;  // pin hole center height from prong base
+gp_total_w  = 3 * gp_prong_w + 2 * gp_gap; // 16mm
 
 module rounded_box(w, d, h, r) {
     translate([r, r, r])
