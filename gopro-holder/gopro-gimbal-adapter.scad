@@ -46,7 +46,7 @@ module weight_block() {
     color("Gray")
     difference() {
         rounded_box(weight_w, weight_d, weight_h, corner_r);
-        translate([weight_wall, weight_wall, weight_wall])
+        #translate([weight_wall, weight_wall, weight_wall])
             cube([weight_w - 2*weight_wall, weight_d - 2*weight_wall, weight_h - 2*weight_wall]);
     }
 }
