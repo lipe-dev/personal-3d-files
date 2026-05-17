@@ -95,4 +95,4 @@ z3 = z2 + grip_h;
 translate([-weight_w/2,    -weight_d/2,    z0]) weight_block();
 translate([-gp_total_w/2,  -gp_prong_d/2,  z1]) connector();
 translate([-grip_w/2,      -gp_prong_d/2,  z2]) phone_grip();
-translate([-gp_total_w/2,  -gp_prong_d/2,  z3]) gopro_mount();
+translate([-gp_total_w/2,  -gp_prong_d/2,  z3 - corner_r]) gopro_mount();
