@@ -65,7 +65,8 @@ module gopro_mount() {
 }
 
 // Assembly
-translate([-body_bot_w/2, -body_d/2, 0])                          counterweight();
-translate([-body_bot_w/2, -body_d/2, cw_h])                       clamp_bottom();
-translate([-body_top_w/2, -body_d/2, cw_h + body_bot_h])          clamp_top();
-translate([-gp_total_w/2,  -body_d/2, cw_h + body_bot_h + body_top_h]) gopro_mount();
+// clamp_bottom rotated 90° around Y: height becomes body_bot_w, width becomes body_bot_h
+translate([-body_bot_w/2,   -body_d/2, 0])                                    counterweight();
+translate([ body_bot_h/2,   -body_d/2, cw_h])          rotate([0,-90,0])      clamp_bottom();
+translate([-body_top_w/2,   -body_d/2, cw_h + body_bot_w])                    clamp_top();
+translate([-gp_total_w/2,   -body_d/2, cw_h + body_bot_w + body_top_h])       gopro_mount();
