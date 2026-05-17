@@ -72,6 +72,9 @@ module prong() {
 
 module gopro_mount() {
     color("Coral")
+    union() {
+        translate([0, 0, -corner_r])
+            cube([gp_total_w, gp_prong_d, corner_r]);
     difference() {
         union() {
             for (i = [0:2]) {
@@ -84,6 +87,7 @@ module gopro_mount() {
             rotate([0, 90, 0])
                 cylinder(d = gp_pin_d, h = gp_total_w + 2);
     }
+    }
 }
 
 // Assembly — all centered on X=0, each section centered on its own Y depth
@@ -95,4 +99,4 @@ z3 = z2 + grip_h;
 translate([-weight_w/2,    -weight_d/2,    z0]) weight_block();
 translate([-gp_total_w/2,  -gp_prong_d/2,  z1]) connector();
 translate([-grip_w/2,      -gp_prong_d/2,  z2]) phone_grip();
-translate([-gp_total_w/2,  -gp_prong_d/2,  z3 - corner_r]) gopro_mount();
+translate([-gp_total_w/2,  -gp_prong_d/2,  z3]) gopro_mount();
