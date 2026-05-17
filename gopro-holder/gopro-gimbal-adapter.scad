@@ -1,20 +1,22 @@
 // GoPro Gimbal Adapter
-// Bottom: counterweight | Lower clamp body | Upper clamp body | Top: GoPro 3-prong mount
+// Stack (bottom→top): weight block | phone grip | connector | GoPro 3-prong mount
 
 $fn = 64;
 
 /* ===================== CONFIGURE HERE ===================== */
-body_d          = 12;      // depth (thickness gimbal grips, shared)
-body_bot_w      = 75;      // lower section width (mm)
-body_bot_h      = 55;      // lower section height (mm)
-body_top_w      = 40;      // upper section width (mm)
-body_top_h      = 60;      // upper section height (mm)
-target_weight_g = 100;     // counterweight target mass (g)
-pla_density     = 0.00124; // g/mm³ at 100% infill
-/* ========================================================== */
+// Phone grip (what the gimbal spring clamps grab)
+grip_w = 60;     // width (mm)
+grip_h = 40;     // height (mm)
+grip_d = 12;     // depth / thickness
 
-// --- Derived ---
-cw_h = target_weight_g / (body_bot_w * body_d * pla_density);
+// Connector (bridges grip to prongs, matches prong footprint)
+connector_h = 8; // height (mm)
+
+// Weight block — GoPro Hero 13 Black body dimensions
+weight_w = 71.8;
+weight_d = 33.4;
+weight_h = 44.9;
+/* ========================================================== */
 
 // --- GoPro mount (fixed standard dims) ---
 gp_prong_w  = 3;    // prong thickness (stacking direction)
@@ -25,19 +27,19 @@ gp_pin_d    = 5;    // pin hole diameter
 gp_pin_z    = 6.5;  // pin hole center height from prong base
 gp_total_w  = 3 * gp_prong_w + 2 * gp_gap; // 14mm
 
-module counterweight() {
+module weight_block() {
     color("Gray")
-        cube([body_bot_w, body_d, cw_h]);
+        cube([weight_w, weight_d, weight_h]);
 }
 
-module clamp_bottom() {
+module phone_grip() {
     color("SteelBlue")
-        cube([body_bot_w, body_d, body_bot_h]);
+        cube([grip_w, grip_d, grip_h]);
 }
 
-module clamp_top() {
-    color("Coral")
-        cube([body_top_w, body_d, body_top_h]);
+module connector() {
+    color("SlateGray")
+        cube([gp_total_w, gp_prong_d, connector_h]);
 }
 
 module prong() {
@@ -50,6 +52,7 @@ module prong() {
 }
 
 module gopro_mount() {
+    color("Coral")
     difference() {
         union() {
             for (i = [0:2]) {
@@ -64,9 +67,13 @@ module gopro_mount() {
     }
 }
 
-// Assembly
-// clamp_bottom rotated 90° around Y: height becomes body_bot_w, width becomes body_bot_h
-translate([-body_bot_w/2,   -body_d/2, 0])                                    counterweight();
-translate([ body_bot_h/2,   -body_d/2, cw_h])          rotate([0,-90,0])      clamp_bottom();
-translate([-body_top_w/2,   -body_d/2, cw_h + body_bot_w])                    clamp_top();
-translate([-gp_total_w/2,   -body_d/2, cw_h + body_bot_w + body_top_h])       gopro_mount();
+// Assembly — all centered on X=0, each section centered on its own Y depth
+z0 = 0;
+z1 = z0 + weight_h;
+z2 = z1 + grip_h;
+z3 = z2 + connector_h;
+
+translate([-weight_w/2,    -weight_d/2,    z0]) weight_block();
+translate([-grip_w/2,      -grip_d/2,      z1]) phone_grip();
+translate([-gp_total_w/2,  -gp_prong_d/2,  z2]) connector();
+translate([-gp_total_w/2,  -gp_prong_d/2,  z3]) gopro_mount();
