@@ -21,7 +21,7 @@ weight_wall = 7;  // hollow void wall thickness — tune to hit target weight
 /* ========================================================== */
 
 // --- Weight estimate ---
-weight_void_vol = (weight_w - 2*weight_wall) * (weight_d - 2*weight_wall) * (weight_h - 2*weight_wall);
+weight_void_vol = (weight_w - 2*weight_wall) * (weight_d - weight_wall) * (weight_h - 2*weight_wall);
 weight_solid_vol = weight_w * weight_d * weight_h - weight_void_vol;
 echo("weight block estimated g =", weight_solid_vol * 0.00124);
 
@@ -46,8 +46,8 @@ module weight_block() {
     color("Gray")
     difference() {
         rounded_box(weight_w, weight_d, weight_h, corner_r);
-        %translate([weight_wall, weight_wall, weight_wall])
-            cube([weight_w - 2*weight_wall, weight_d - 2*weight_wall, weight_h - 2*weight_wall]);
+        %translate([weight_wall, 0, weight_wall])
+            cube([weight_w - 2*weight_wall, weight_d - weight_wall, weight_h - 2*weight_wall]);
     }
 }
 
