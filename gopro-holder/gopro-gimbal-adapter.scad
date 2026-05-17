@@ -6,7 +6,6 @@ $fn = 64;
 /* ===================== CONFIGURE HERE ===================== */
 // Phone grip (what the gimbal spring clamps grab)
 grip_h = 40;     // height (mm)
-grip_d = 12;     // depth / thickness
 
 // Connector (bridges grip to prongs, matches prong footprint)
 connector_h = 8; // height (mm)
@@ -33,7 +32,7 @@ module weight_block() {
 
 module phone_grip() {
     color("SteelBlue")
-        cube([gp_total_w, grip_d, grip_h]);
+        cube([gp_total_w, gp_prong_d, grip_h]);
 }
 
 module connector() {
@@ -74,5 +73,5 @@ z3 = z2 + grip_h;
 
 translate([-weight_w/2,    -weight_d/2,    z0]) weight_block();
 translate([-gp_total_w/2,  -gp_prong_d/2,  z1]) connector();
-translate([-gp_total_w/2,  -grip_d/2,      z2]) phone_grip();
+translate([-gp_total_w/2,  -gp_prong_d/2,  z2]) phone_grip();
 translate([-gp_total_w/2,  -gp_prong_d/2,  z3]) gopro_mount();
