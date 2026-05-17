@@ -16,14 +16,8 @@ weight_w = 71.8;
 weight_d = 33.4;
 weight_h = 44.9;
 
-corner_r    = 3;  // rounding radius for grip and weight block (mm)
-weight_wall = 7.5;  // hollow void wall thickness — tune to hit target weight (100% infill)
+corner_r = 3;  // rounding radius for grip and weight block (mm)
 /* ========================================================== */
-
-// --- Weight estimate ---
-weight_void_vol = (weight_w - 2*weight_wall) * (weight_d - weight_wall) * (weight_h - 2*weight_wall);
-weight_solid_vol = weight_w * weight_d * weight_h - weight_void_vol;
-echo("weight block estimated g =", weight_solid_vol * 0.00124);
 
 // --- GoPro mount (fixed standard dims) ---
 gp_prong_w  = 3;    // prong thickness (stacking direction)
@@ -44,11 +38,7 @@ module rounded_box(w, d, h, r) {
 
 module weight_block() {
     color("Gray")
-    difference() {
         rounded_box(weight_w, weight_d, weight_h, corner_r);
-        translate([weight_wall, 0, weight_wall])
-            cube([weight_w - 2*weight_wall, weight_d - weight_wall, weight_h - 2*weight_wall]);
-    }
 }
 
 module phone_grip() {
