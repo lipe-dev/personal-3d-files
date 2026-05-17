@@ -17,7 +17,7 @@ weight_d = 33.4;
 weight_h = 44.9;
 
 corner_r    = 3;  // rounding radius for grip and weight block (mm)
-weight_wall = 7;  // hollow void wall thickness — tune to hit target weight
+weight_wall = 9;  // hollow void wall thickness — tune to hit target weight (100% infill)
 /* ========================================================== */
 
 // --- Weight estimate ---
