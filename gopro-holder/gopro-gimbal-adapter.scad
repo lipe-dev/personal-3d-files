@@ -15,12 +15,13 @@ pla_density     = 0.00124; // g/mm³ at 100% infill
 cw_h = target_weight_g / (body_w * body_d * pla_density);
 
 // --- GoPro mount (fixed standard dims) ---
-gp_prong_w  = 5;    // each prong width
-gp_prong_d  = 15;   // prong depth
-gp_prong_h  = 9;    // prong height
+gp_prong_w  = 3;    // prong thickness (stacking direction)
+gp_prong_d  = 9;    // prong depth (width of each tab)
+gp_prong_h  = 13;   // prong height
 gp_gap      = 2.5;  // gap between prongs
 gp_pin_d    = 5;    // pin hole diameter
-gp_total_w  = 3 * gp_prong_w + 2 * gp_gap; // 20mm
+gp_pin_z    = 6.5;  // pin hole center height from prong base
+gp_total_w  = 3 * gp_prong_w + 2 * gp_gap; // 14mm
 
 module counterweight() {
     cube([body_w, body_d, cw_h]);
@@ -30,10 +31,10 @@ module clamp_body() {
 }
 module prong() {
     union() {
-        cube([gp_prong_w, gp_prong_d, gp_prong_h - gp_prong_w / 2]);
-        translate([gp_prong_w / 2, gp_prong_d / 2, gp_prong_h - gp_prong_w / 2])
-            rotate([90, 0, 0])
-                cylinder(r = gp_prong_w / 2, h = gp_prong_d, center = true);
+        cube([gp_prong_w, gp_prong_d, gp_prong_h - gp_prong_d / 2]);
+        translate([gp_prong_w / 2, gp_prong_d / 2, gp_prong_h - gp_prong_d / 2])
+            rotate([0, 90, 0])
+                cylinder(r = gp_prong_d / 2, h = gp_prong_w, center = true);
     }
 }
 
@@ -45,8 +46,8 @@ module gopro_mount() {
                     prong();
             }
         }
-        // pin hole through all prongs along X, centered in depth and at mid-height
-        translate([-1, gp_prong_d / 2, gp_prong_h / 2])
+        // pin hole through all prongs along X
+        translate([-1, gp_prong_d / 2, gp_pin_z])
             rotate([0, 90, 0])
                 cylinder(d = gp_pin_d, h = gp_total_w + 2);
     }
