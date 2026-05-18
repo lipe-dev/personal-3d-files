@@ -15,6 +15,7 @@ gp_total_w  = 3 * gp_prong_w + 2 * gp_gap; // 16mm
 /* ===================== CONFIGURE HERE ===================== */
 grip_w      = 60;         // phone grip width (mm)
 grip_h      = 40;         // phone grip height (mm)
+grip_d      = 8;          // phone grip depth — smartphone thickness
 connector_h = gp_prong_h; // matches prong height — equal lever arm for balance
 
 // Weight block — GoPro Hero 13 Black body dimensions
@@ -30,7 +31,7 @@ module weight_block() {
 
 module phone_grip() {
     color("SteelBlue")
-        cube([grip_w, gp_prong_d, grip_h]);
+        cube([grip_w, grip_d, grip_h]);
 }
 
 module connector() {
