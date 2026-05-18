@@ -3,22 +3,6 @@
 
 $fn = 64;
 
-/* ===================== CONFIGURE HERE ===================== */
-// Phone grip (what the gimbal spring clamps grab)
-grip_w = 60;     // width (mm)
-grip_h = 40;     // height (mm)
-
-// Connector (bridges grip to prongs, matches prong footprint)
-connector_h = 8; // height (mm)
-
-// Weight block — GoPro Hero 13 Black body dimensions
-weight_w = 71.8;
-weight_d = 33.4;
-weight_h = 44.9;
-
-corner_r = 3;  // rounding radius for grip and weight block (mm)
-/* ========================================================== */
-
 // --- GoPro mount (fixed standard dims) ---
 gp_prong_w  = 3;    // prong thickness (stacking direction)
 gp_prong_d  = 15;   // prong depth — GoPro standard outer diameter
@@ -27,6 +11,22 @@ gp_gap      = 3.5;  // gap between prongs — GoPro standard slit width
 gp_pin_d    = 5;    // pin hole diameter (M5)
 gp_pin_z    = 8.5;  // pin hole center height from prong base
 gp_total_w  = 3 * gp_prong_w + 2 * gp_gap; // 16mm
+
+/* ===================== CONFIGURE HERE ===================== */
+// Phone grip (what the gimbal spring clamps grab)
+grip_w = 60;     // width (mm)
+grip_h = 40;     // height (mm)
+
+// Connector height matches prong height — equal lever arm above/below grip for balance
+connector_h = gp_prong_h;
+
+// Weight block — GoPro Hero 13 Black body dimensions
+weight_w = 71.8;
+weight_d = 33.4;
+weight_h = 44.9;
+
+corner_r = 3;  // rounding radius for grip and weight block (mm)
+/* ========================================================== */
 
 module rounded_box(w, d, h, r) {
     translate([r, r, r])
