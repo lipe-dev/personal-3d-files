@@ -1,126 +1,154 @@
 // Base plate — Atlas monitor stand
-// Greek crepidoma: 3-tier square stepped platform
-// Per-tier profile: base plinth → neck → grooved fascia → crown overhang
-// Corners: 45° chamfer on all tiers throughout
-// All dimensions in mm
+// Parametric profile stack: define layers bottom→top, width auto-accumulates
+//
+// Layer types  [type, height, param]
+//   "V"   vertical face          — no width change
+//   "D"   diagonal taper         — param = angle from horizontal (45=classic chamfer)
+//   "CC"  concave quarter-circle — param = curve radius (narrows by 2*r)
+//   "CV"  convex quarter-circle  — param = curve radius, MAY overhang, check in slicer
+//   "DT"  dentils                — param = [tooth_w, gap_w, cut_depth]
+//
+// PRINT CONSTRAINT: profile must only narrow going up (no layer wider than one below).
+// "D" with angle > 45° from horizontal will overhang — use ≤ 45° for support-free print.
 
-// ── Overall ──────────────────────────────────────
-tier_count   = 3;
-tier_h       = 20;     // height per tier (total = 60mm)
-tier_inset   = 20;     // each tier steps inward this much per side
-base_w       = 270;    // bottom tier width
-base_d       = 270;    // bottom tier depth
-total_h      = tier_count * tier_h;
+base_w = 270;   // starting width at bottom (square base)
 
-// ── Per-tier profile ─────────────────────────────
-plinth_h     = 4;      // base plinth (wide)
-plinth_out   = 7;      // how much plinth protrudes beyond tier body
-neck_h       = 3;      // recessed neck — deep shadow at base of fascia
-neck_in      = 5;      // neck inset
-fascia_h     = tier_h - plinth_h - neck_h - crown_h; // computed below
-crown_h      = 5;      // projecting crown lip at top
-crown_out    = 6;      // crown protrusion
+profile = [
+    // ── tier 1 (bottom, euthynteria) ──────────────────────────
+    ["V",  2, 0],            // base fillet
+    ["D",  5, 45],           // 45° chamfer — clean lead-in
+    ["V",  2, 0],            // vertical band
+    ["DT", 9, [9, 6, 3]],   // dentils: 9mm tooth, 6mm gap, 3mm deep
+    ["V",  2, 0],
+    ["CC", 5, 5],            // concave curve (narrows 10mm total)
 
-// ── Corner chamfer ───────────────────────────────
-corner_c     = 18;     // 45° cut on all 4 vertical corners of every element
+    // ── tier 2 (middle, stereobate) ───────────────────────────
+    ["V",  3, 0],
+    ["D",  4, 30],           // 30° chamfer — shallower angle, gentler step
+    ["V",  2, 0],
+    ["DT", 7, [7, 5, 2.5]], // smaller dentils
+    ["V",  2, 0],
+    ["CC", 4, 4],            // smaller concave curve
 
-// ── Perimeter groove bands ───────────────────────
-groove_h     = 2.0;    // height of each horizontal groove
-groove_d     = 2.5;    // depth of groove cut into fascia face
-groove_count = 2;      // two grooves dividing fascia into thirds
+    // ── tier 3 (top, stylobate — columns stand here) ──────────
+    ["V",  3, 0],
+    ["D",  3, 45],           // 45° chamfer
+    ["V",  2, 0],
+];
 
-// ── Sockets ──────────────────────────────────────
-rear_span        = 160;
-atlas_y_offset   = 66.7;
-rear_y_offset    = -33.3;
-socket_depth     = 15;
-col_socket_d     = 25;    // adjust after measuring sourced column STL
-atlas_socket_d   = 20;    // adjust after measuring sourced Atlas STL
-socket_tol       = 0.3;
+// ── Socket config (set after measuring sourced STLs) ─────────
+rear_span      = 160;
+atlas_y_offset = 66.7;
+rear_y_offset  = -33.3;
+socket_depth   = 15;
+col_socket_d   = 25;
+atlas_socket_d = 20;
+socket_tol     = 0.3;
 
-$fn = 80;
+$fn = 60;
 
-echo("total_h =", total_h);
-echo("fascia_h =", tier_h - plinth_h - neck_h - crown_h);
-echo("top tier w =", base_w - 2 * tier_inset * (tier_count - 1));
-echo("socket floor =", total_h - socket_depth);
+// ── Width/height tracking (recursive) ────────────────────────
+function _dw(i) =
+    (profile[i][0] == "D")  ? 2 * profile[i][1] * tan(profile[i][2]) :
+    (profile[i][0] == "CC") ? 2 * profile[i][2] :
+    (profile[i][0] == "CV") ? 2 * profile[i][2] :
+    0;  // V and DT: no width change
 
-// ── Geometry ─────────────────────────────────────
-base_plate();
+function w_at(i) = (i == 0) ? base_w : w_at(i-1) - _dw(i-1);
+function z_at(i) = (i == 0) ? 0     : z_at(i-1) + profile[i-1][1];
 
-module base_plate() {
-    difference() {
-        union() {
-            crepidoma();
-        }
-        socket_holes();
-        groove_cuts();
+total_h = z_at(len(profile));
+top_w   = w_at(len(profile));
+
+echo("total_h =",  total_h);
+echo("top_w =",    top_w);
+echo("socket_floor =", total_h - socket_depth);
+
+// ── Main ─────────────────────────────────────────────────────
+difference() {
+    profile_stack();
+    socket_holes();
+}
+
+module profile_stack() {
+    for (i = [0 : len(profile)-1]) {
+        t    = profile[i][0];
+        h    = profile[i][1];
+        p    = profile[i][2];
+        w    = w_at(i);
+        z    = z_at(i);
+
+        if      (t == "V")  layer_v  (w, h, z);
+        else if (t == "D")  layer_d  (w, h, z, p);
+        else if (t == "CC") layer_cc (w, h, z, p);
+        else if (t == "CV") layer_cv (w, h, z, p);
+        else if (t == "DT") layer_dt (w, h, z, p[0], p[1], p[2]);
     }
 }
 
-// ─ Chamfered rectangular prism (hull of two cross-rects, centered at origin base) ─
-module cbox(w, d, h, c=corner_c) {
+// ── Layer modules ─────────────────────────────────────────────
+
+module layer_v(w, h, z) {
+    translate([-w/2, -w/2, z]) cube([w, w, h]);
+}
+
+module layer_d(w, h, z, angle) {
+    // Tapers inward: bottom width w, top width w2
+    w2 = w - 2 * h * tan(angle);
     hull() {
-        translate([c, 0, 0]) cube([w - 2*c, d, h]);
-        translate([0, c, 0]) cube([w, d - 2*c, h]);
+        translate([-w/2,  -w/2,  z])   cube([w,  w,  0.01]);
+        translate([-w2/2, -w2/2, z+h]) cube([w2, w2, 0.01]);
     }
 }
 
-// ─ Profiled tier: plinth + neck + fascia + crown, all chamfered ─
-module profiled_tier(w, d, z) {
-    fh = tier_h - plinth_h - neck_h - crown_h;
-
-    pw = w + 2*plinth_out;  pd = d + 2*plinth_out;
-    nw = w - 2*neck_in;     nd = d - 2*neck_in;
-    cw = w + 2*crown_out;   cd = d + 2*crown_out;
-
-    // Base plinth — wide projecting foot
-    translate([-pw/2, -pd/2, z])
-        cbox(pw, pd, plinth_h);
-
-    // Neck — recessed band, deep shadow at base of fascia
-    translate([-nw/2, -nd/2, z + plinth_h])
-        cbox(nw, nd, neck_h);
-
-    // Fascia — main vertical face
-    translate([-w/2, -d/2, z + plinth_h + neck_h])
-        cbox(w, d, fh);
-
-    // Crown — projecting overhang, throws shadow on tier below
-    translate([-cw/2, -cd/2, z + plinth_h + neck_h + fh])
-        cbox(cw, cd, crown_h);
-}
-
-module crepidoma() {
-    for (i = [0 : tier_count - 1]) {
-        w = base_w - 2 * tier_inset * i;
-        d = base_d - 2 * tier_inset * i;
-        profiled_tier(w, d, i * tier_h);
+module layer_cc(w, h, z, r, n=10) {
+    // Concave quarter-circle: starts steep (vertical), accelerates inward
+    // x_outer(t) = (w - 2r*sin(t*90)) / 2
+    for (i = [0:n-1]) {
+        t0 = i/n;  t1 = (i+1)/n;
+        w0 = w - 2*r*sin(t0*90);
+        w1 = w - 2*r*sin(t1*90);
+        hull() {
+            translate([-w0/2, -w0/2, z+h*t0]) cube([w0, w0, 0.01]);
+            translate([-w1/2, -w1/2, z+h*t1]) cube([w1, w1, 0.01]);
+        }
     }
 }
 
-// ─ Horizontal groove bands — run full perimeter of each tier's fascia ─
-// Two grooves divide each fascia face into thirds, creating banded look
-module groove_cuts() {
-    for (i = [0 : tier_count - 1]) {
-        w = base_w - 2 * tier_inset * i;
-        d = base_d - 2 * tier_inset * i;
-        fh    = tier_h - plinth_h - neck_h - crown_h;
-        z_fas = i * tier_h + plinth_h + neck_h;  // bottom of fascia
+module layer_cv(w, h, z, r, n=10) {
+    // Convex quarter-circle: starts gentle, ends steep — may need slicer support
+    // x_outer(t) = (w - 2r*(1-cos(t*90))) / 2
+    for (i = [0:n-1]) {
+        t0 = i/n;  t1 = (i+1)/n;
+        w0 = w - 2*r*(1 - cos(t0*90));
+        w1 = w - 2*r*(1 - cos(t1*90));
+        hull() {
+            translate([-w0/2, -w0/2, z+h*t0]) cube([w0, w0, 0.01]);
+            translate([-w1/2, -w1/2, z+h*t1]) cube([w1, w1, 0.01]);
+        }
+    }
+}
 
-        // Two grooves at 1/3 and 2/3 height of fascia
-        for (g = [1 : groove_count]) {
-            gz = z_fas + fh * g / (groove_count + 1) - groove_h / 2;
+module layer_dt(w, h, z, tw, gw, depth) {
+    // Dentils: vertical layer with evenly-spaced rectangular gap cuts on all 4 faces
+    // tw=tooth width, gw=gap width, depth=cut depth
+    period = tw + gw;
+    margin = tw;  // solid tooth at each corner
 
-            // Frame-shaped cut: outer box minus inner box
-            ow = w + 0.2;  od = d + 0.2;
-            iw = w - 2*groove_d;  id = d - 2*groove_d;
+    difference() {
+        translate([-w/2, -w/2, z]) cube([w, w, h]);
 
-            translate([-ow/2, -od/2, gz])
-            difference() {
-                cube([ow, od, groove_h]);
-                translate([groove_d, groove_d, -0.1])
-                    cube([iw, id, groove_h + 0.2]);
+        for (face = [0:3]) {
+            // Rotate to each of the 4 faces
+            rotate([0, 0, face * 90]) {
+                flat = w - 2*margin;
+                count = floor(flat / period);
+                start = margin + (flat - count*period) / 2;
+                for (i = [0:count-1]) {
+                    x = -w/2 + start + i*period + tw;
+                    translate([x, w/2 - depth, z - 0.1])
+                        cube([gw, depth + 0.1, h + 0.2]);
+                }
             }
         }
     }
@@ -129,10 +157,8 @@ module groove_cuts() {
 module socket_holes() {
     translate([-rear_span/2, rear_y_offset, total_h - socket_depth])
         cylinder(d = col_socket_d + socket_tol, h = socket_depth + 1);
-
-    translate([rear_span/2, rear_y_offset, total_h - socket_depth])
+    translate([ rear_span/2, rear_y_offset, total_h - socket_depth])
         cylinder(d = col_socket_d + socket_tol, h = socket_depth + 1);
-
     translate([0, atlas_y_offset, total_h - socket_depth])
         cylinder(d = atlas_socket_d + socket_tol, h = socket_depth + 1);
 }
