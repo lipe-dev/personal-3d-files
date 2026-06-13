@@ -185,7 +185,7 @@ module layer_sp(w, h, z, sp_r, turns, groove_r, mode=0) {
     module _spirals() {
         for (face = [0:3])
             rotate([0, 0, face*90])
-                for (row = [0:rows]) {
+                for (row = [0:rows-1]) {
                     hex_offset = (row % 2 == 0) ? 0 : sp_r;
                     cols = floor((w - hex_offset) / (sp_r*2));
                     for (col = [0:cols]) {
