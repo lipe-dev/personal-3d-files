@@ -46,7 +46,7 @@ module base_plate() {
     difference() {
         stepped_disc();
         socket_holes();
-        // meander_ring();   — added in Task 3
+        meander_ring();
     }
 }
 
@@ -70,4 +70,23 @@ module socket_holes() {
     // Front Atlas
     translate([0, atlas_y_offset, plate_h - socket_depth])
         cylinder(d = atlas_socket_d + socket_tol, h = socket_depth + 1);
+}
+
+module meander_ring() {
+    // Greek key approximation: alternating radial and tangential notches
+    // arranged in a ring on the top face at radius meander_r
+    seg_angle = 360 / round(2 * PI * meander_r / (meander_seg * 2));
+    count     = round(360 / seg_angle);
+
+    for (i = [0 : count - 1]) {
+        angle = i * seg_angle;
+        // Tangential slot
+        rotate([0, 0, angle])
+        translate([meander_r, 0, plate_h - meander_depth])
+            cube([meander_seg, meander_seg * 0.4, meander_depth + 1], center = true);
+        // Radial slot (offset half step)
+        rotate([0, 0, angle + seg_angle/2])
+        translate([meander_r, 0, plate_h - meander_depth])
+            cube([meander_seg * 0.4, meander_seg, meander_depth + 1], center = true);
+    }
 }
