@@ -192,7 +192,7 @@ module _spiral(cx, cz, face_w, r_out, turns, gr, segs=52) {
     r_in = gr * 1.2;  // tight inner terminus
     for (i = [0:segs-1]) {
         t0 = i / segs;  t1 = (i+1) / segs;
-        a0 = -90 + t0 * turns * 360;  a1 = -90 + t1 * turns * 360;
+        a0 = -135 + t0 * turns * 360;  a1 = -135 + t1 * turns * 360;
         rr0 = r_out * (1-t0) + r_in * t0;
         rr1 = r_out * (1-t1) + r_in * t1;
         hull() {
