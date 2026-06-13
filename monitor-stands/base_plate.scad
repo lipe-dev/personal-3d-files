@@ -34,6 +34,10 @@ $fn = 120;
 
 echo("step_h =", step_h);          // expect: 5
 echo("top step r =", plate_d/2 - (step_count-1)*step_inset);  // expect: 105
+echo("socket floor =", plate_h - socket_depth);  // expect: 3
+echo("atlas dist from center =", atlas_y_offset);       // 66.7
+echo("rear col dist from center =", abs(rear_y_offset)); // 33.3
+echo("atlas + rear =", atlas_y_offset + abs(rear_y_offset)); // 100
 
 // ── Geometry ──────────────────────────────────────
 base_plate();
@@ -41,7 +45,7 @@ base_plate();
 module base_plate() {
     difference() {
         stepped_disc();
-        // socket_holes();   — added in Task 2
+        socket_holes();
         // meander_ring();   — added in Task 3
     }
 }
@@ -52,4 +56,18 @@ module stepped_disc() {
         h = plate_h - i * step_h;
         cylinder(r = r, h = h);
     }
+}
+
+module socket_holes() {
+    // Rear left column
+    translate([-rear_span/2, rear_y_offset, plate_h - socket_depth])
+        cylinder(d = col_socket_d + socket_tol, h = socket_depth + 1);
+
+    // Rear right column
+    translate([rear_span/2, rear_y_offset, plate_h - socket_depth])
+        cylinder(d = col_socket_d + socket_tol, h = socket_depth + 1);
+
+    // Front Atlas
+    translate([0, atlas_y_offset, plate_h - socket_depth])
+        cylinder(d = atlas_socket_d + socket_tol, h = socket_depth + 1);
 }
