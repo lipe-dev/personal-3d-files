@@ -9,6 +9,8 @@
 //   "DT"  dentils                — param = [tooth_w, gap_w, cut_depth]
 //   "SW"  wave/swirl groove      — param = [amplitude, n_waves, groove_r, n_grooves]
 //                                   n_grooves=1 → single wave, =2 → interleaved swirl
+//   "SP"  spiral shells          — param = [spiral_r, turns, groove_r]
+//                                   hex-packed snail shells tiling all 4 faces
 //
 // PRINT CONSTRAINT: profile must only narrow going up (no layer wider than one below).
 // "D" with angle > 45° from horizontal will overhang — use ≤ 45° for support-free print.
@@ -31,6 +33,8 @@ profile = [
     ["D",  4, 30],           // 30° chamfer — shallower angle, gentler step
     ["V",  2, 0],
     ["DT", 7, [7, 5, 2.5]], // smaller dentils
+    ["V",  2, 0],
+    ["SP", 28, [8, 1.5, 1.5]], // snail shell spirals, hex-packed
     ["V",  2, 0],
     ["CC", 4, 4],            // smaller concave curve
 
@@ -56,7 +60,7 @@ function _dw(i) =
     (profile[i][0] == "D")  ? 2 * profile[i][1] * tan(profile[i][2]) :
     (profile[i][0] == "CC") ? 2 * profile[i][2] :
     (profile[i][0] == "CV") ? 2 * profile[i][2] :
-    0;  // V and DT: no width change
+    0;  // V, DT, SW, SP: no width change
 
 function w_at(i) = (i == 0) ? base_w : w_at(i-1) - _dw(i-1);
 function z_at(i) = (i == 0) ? 0     : z_at(i-1) + profile[i-1][1];
@@ -88,6 +92,7 @@ module profile_stack() {
         else if (t == "CV") layer_cv (w, h, z, p);
         else if (t == "DT") layer_dt (w, h, z, p[0], p[1], p[2]);
         else if (t == "SW") layer_sw (w, h, z, p[0], p[1], p[2], p[3]);
+        else if (t == "SP") layer_sp (w, h, z, p[0], p[1], p[2]);
     }
 }
 
@@ -144,17 +149,55 @@ module layer_dt(w, h, z, tw, gw, depth) {
         translate([-w/2, -w/2, z]) cube([w, w, h]);
 
         for (face = [0:3]) {
-            // Rotate to each of the 4 faces
             rotate([0, 0, face * 90]) {
-                flat = w - 2*margin;
-                count = floor(flat / period);
+                flat  = w - 2*margin;
+                count = round(flat / period);   // round → symmetric, no missing end gap
                 start = margin + (flat - count*period) / 2;
                 for (i = [0:count-1]) {
                     x = -w/2 + start + i*period + tw;
-                    translate([x, w/2 - depth, z - 0.1])
-                        cube([gw, depth + 0.1, h + 0.2]);
+                    if (x + gw <= w/2 - margin)  // clamp: never cut into corner margin
+                        translate([x, w/2 - depth, z - 0.1])
+                            cube([gw, depth + 0.1, h + 0.2]);
                 }
             }
+        }
+    }
+}
+
+module layer_sp(w, h, z, sp_r, turns, groove_r) {
+    // Hex-packed Archimedean spiral shells carved into all 4 faces.
+    // Each shell spirals from outer radius sp_r inward over `turns` rotations.
+    row_stride = sp_r * sqrt(3);  // vertical spacing for hex packing
+    rows = max(1, floor(h / row_stride));
+
+    difference() {
+        translate([-w/2, -w/2, z]) cube([w, w, h]);
+        for (face = [0:3])
+            rotate([0, 0, face*90])
+                for (row = [0:rows]) {
+                    hex_offset = (row % 2 == 0) ? 0 : sp_r;
+                    cols = floor((w - hex_offset) / (sp_r*2));
+                    for (col = [0:cols]) {
+                        cx = -w/2 + sp_r + col*sp_r*2 + hex_offset;
+                        cz = z + sp_r + row * row_stride;
+                        if (cx > -w/2+sp_r && cx < w/2-sp_r && cz < z+h-groove_r)
+                            _spiral(cx, cz, w, sp_r, turns, groove_r);
+                    }
+                }
+    }
+}
+
+module _spiral(cx, cz, face_w, r_out, turns, gr, segs=52) {
+    // Single Archimedean spiral groove on the +Y face, centered at (cx, cz)
+    r_in = gr * 1.2;  // tight inner terminus
+    for (i = [0:segs-1]) {
+        t0 = i / segs;  t1 = (i+1) / segs;
+        a0 = t0 * turns * 360;  a1 = t1 * turns * 360;
+        rr0 = r_out * (1-t0) + r_in * t0;
+        rr1 = r_out * (1-t1) + r_in * t1;
+        hull() {
+            translate([cx + rr0*cos(a0), face_w/2, cz + rr0*sin(a0)]) sphere(r=gr, $fn=6);
+            translate([cx + rr1*cos(a1), face_w/2, cz + rr1*sin(a1)]) sphere(r=gr, $fn=6);
         }
     }
 }
