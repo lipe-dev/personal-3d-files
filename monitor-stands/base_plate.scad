@@ -7,6 +7,8 @@
 //   "CC"  concave quarter-circle — param = curve radius (narrows by 2*r)
 //   "CV"  convex quarter-circle  — param = curve radius, MAY overhang, check in slicer
 //   "DT"  dentils                — param = [tooth_w, gap_w, cut_depth]
+//   "SW"  wave/swirl groove      — param = [amplitude, n_waves, groove_r, n_grooves]
+//                                   n_grooves=1 → single wave, =2 → interleaved swirl
 //
 // PRINT CONSTRAINT: profile must only narrow going up (no layer wider than one below).
 // "D" with angle > 45° from horizontal will overhang — use ≤ 45° for support-free print.
@@ -18,9 +20,11 @@ profile = [
     ["V",  2, 0],            // base fillet
     ["D",  5, 45],           // 45° chamfer — clean lead-in
     ["V",  2, 0],            // vertical band
-    ["DT", 9, [9, 6, 3]],   // dentils: 9mm tooth, 6mm gap, 3mm deep
+    ["DT", 9, [9, 6, 3]],      // dentils: 9mm tooth, 6mm gap, 3mm deep
     ["V",  2, 0],
-    ["CC", 5, 5],            // concave curve (narrows 10mm total)
+    ["SW", 8, [2, 4, 1.8, 2]], // swirl: 2mm amplitude, 4 waves, 1.8mm groove, 2 interleaved
+    ["V",  2, 0],
+    ["CC", 5, 5],              // concave curve (narrows 10mm total)
 
     // ── tier 2 (middle, stereobate) ───────────────────────────
     ["V",  3, 0],
@@ -83,6 +87,7 @@ module profile_stack() {
         else if (t == "CC") layer_cc (w, h, z, p);
         else if (t == "CV") layer_cv (w, h, z, p);
         else if (t == "DT") layer_dt (w, h, z, p[0], p[1], p[2]);
+        else if (t == "SW") layer_sw (w, h, z, p[0], p[1], p[2], p[3]);
     }
 }
 
@@ -150,6 +155,33 @@ module layer_dt(w, h, z, tw, gw, depth) {
                         cube([gw, depth + 0.1, h + 0.2]);
                 }
             }
+        }
+    }
+}
+
+module layer_sw(w, h, z, amplitude, n_waves, groove_r, n_grooves) {
+    // Sinusoidal groove channel(s) carved into each face.
+    // n_grooves=1: single wave. n_grooves=2: two interleaved waves (swirl look).
+    difference() {
+        translate([-w/2, -w/2, z]) cube([w, w, h]);
+        for (face = [0:3])
+            rotate([0, 0, face*90])
+                for (g = [0:n_grooves-1])
+                    _wave_groove(w, h, z, amplitude, n_waves, groove_r,
+                                 phase = g * 360 / n_grooves);
+    }
+}
+
+module _wave_groove(w, h, z, amplitude, n_waves, r, phase, segs=80) {
+    // Cuts a tube-shaped groove following a sine path along one face (the +Y face).
+    for (i = [0:segs-1]) {
+        x0 = -w/2 + (i)   * w/segs;
+        x1 = -w/2 + (i+1) * w/segs;
+        z0 = z + h/2 + amplitude * sin(phase + i     * n_waves * 360/segs);
+        z1 = z + h/2 + amplitude * sin(phase + (i+1) * n_waves * 360/segs);
+        hull() {
+            translate([x0, w/2, z0]) sphere(r=r, $fn=8);
+            translate([x1, w/2, z1]) sphere(r=r, $fn=8);
         }
     }
 }
