@@ -24,7 +24,7 @@ profile = [
     ["V",  2, 0],            // vertical band
     ["DT", 9, [9, 6, 3]],      // dentils: 9mm tooth, 6mm gap, 3mm deep
     ["V",  2, 0],
-    ["SW", 16, [6, 8, 2.8, 3]], // swirl: 6mm amplitude, 8 waves, 2.8mm groove, 3 interleaved
+    ["SW", 16, [6, 8, 2.8, 3, 0]], // swirl: amp, waves, groove_r, n_grooves, mode(0=sub/1=add)
     ["V",  2, 0],
     ["CC", 5, 5],              // concave curve (narrows 10mm total)
 
@@ -34,7 +34,7 @@ profile = [
     ["V",  2, 0],
     ["DT", 7, [7, 5, 2.5]], // smaller dentils
     ["V",  2, 0],
-    ["SP", 28, [8, 1.5, 1.5]], // snail shell spirals, hex-packed
+    ["SP", 28, [8, 1.5, 1.5, 0]], // spirals: sp_r, turns, groove_r, mode(0=sub/1=add)
     ["V",  2, 0],
     ["CC", 4, 4],            // smaller concave curve
 
@@ -91,8 +91,8 @@ module profile_stack() {
         else if (t == "CC") layer_cc (w, h, z, p);
         else if (t == "CV") layer_cv (w, h, z, p);
         else if (t == "DT") layer_dt (w, h, z, p[0], p[1], p[2]);
-        else if (t == "SW") layer_sw (w, h, z, p[0], p[1], p[2], p[3]);
-        else if (t == "SP") layer_sp (w, h, z, p[0], p[1], p[2]);
+        else if (t == "SW") layer_sw (w, h, z, p[0], p[1], p[2], p[3], p[4]);
+        else if (t == "SP") layer_sp (w, h, z, p[0], p[1], p[2], p[3]);
     }
 }
 
@@ -164,14 +164,13 @@ module layer_dt(w, h, z, tw, gw, depth) {
     }
 }
 
-module layer_sp(w, h, z, sp_r, turns, groove_r) {
-    // Hex-packed Archimedean spiral shells carved into all 4 faces.
-    // Each shell spirals from outer radius sp_r inward over `turns` rotations.
-    row_stride = sp_r * sqrt(3);  // vertical spacing for hex packing
+module layer_sp(w, h, z, sp_r, turns, groove_r, mode=0) {
+    // mode 0 = subtractive (grooves cut in), mode 1 = additive (ridges protrude out)
+    // Hex-packed Archimedean spiral shells on all 4 faces.
+    row_stride = sp_r * sqrt(3);
     rows = max(1, floor(h / row_stride));
 
-    difference() {
-        translate([-w/2, -w/2, z]) cube([w, w, h]);
+    module _spirals() {
         for (face = [0:3])
             rotate([0, 0, face*90])
                 for (row = [0:rows]) {
@@ -185,6 +184,9 @@ module layer_sp(w, h, z, sp_r, turns, groove_r) {
                     }
                 }
     }
+
+    if (mode == 0) difference() { translate([-w/2,-w/2,z]) cube([w,w,h]); _spirals(); }
+    else           union()      { translate([-w/2,-w/2,z]) cube([w,w,h]); _spirals(); }
 }
 
 module _spiral(cx, cz, face_w, r_out, turns, gr, segs=52) {
@@ -202,17 +204,18 @@ module _spiral(cx, cz, face_w, r_out, turns, gr, segs=52) {
     }
 }
 
-module layer_sw(w, h, z, amplitude, n_waves, groove_r, n_grooves) {
-    // Sinusoidal groove channel(s) carved into each face.
-    // n_grooves=1: single wave. n_grooves=2: two interleaved waves (swirl look).
-    difference() {
-        translate([-w/2, -w/2, z]) cube([w, w, h]);
+module layer_sw(w, h, z, amplitude, n_waves, groove_r, n_grooves, mode=0) {
+    // mode 0 = subtractive (grooves cut in), mode 1 = additive (ridges protrude out)
+    module _waves() {
         for (face = [0:3])
             rotate([0, 0, face*90])
                 for (g = [0:n_grooves-1])
                     _wave_groove(w, h, z, amplitude, n_waves, groove_r,
                                  phase = g * 360 / n_grooves);
     }
+
+    if (mode == 0) difference() { translate([-w/2,-w/2,z]) cube([w,w,h]); _waves(); }
+    else           union()      { translate([-w/2,-w/2,z]) cube([w,w,h]); _waves(); }
 }
 
 module _wave_groove(w, h, z, amplitude, n_waves, r, phase, segs=80) {
