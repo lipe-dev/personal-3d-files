@@ -5,13 +5,14 @@
 // Overall geometry
 tier_count      = 3;
 tier_inset      = 15;    // each tier narrows by this much on each side
-tier_h          = 5;     // height of each tier
+tier_h          = 10;    // height of each tier
+lip_h           = 4;     // raised fillet ridge at outer edge of each tread
+lip_out         = 6;     // width of lip strip
 base_w          = 250;   // bottom tier width (square)
 base_d          = 250;   // bottom tier depth (square)
-total_h         = tier_count * tier_h;  // 15mm total
+total_h         = tier_count * tier_h;  // 30mm total
 
 // Triangle socket positions (relative to plate center = triangle centroid)
-// Centroid of triangle: rear columns at Y=-33.3, Atlas at Y=+66.7
 rear_span        = 160;   // center-to-center between rear two column sockets
 atlas_y_offset   = 66.7;  // Atlas socket forward of centroid
 rear_y_offset    = -33.3; // rear column sockets behind centroid
@@ -25,9 +26,9 @@ socket_tol       = 0.3;   // friction-fit tolerance (added to socket diameter)
 $fn = 80;
 // F5 = fast preview  |  F6 = full render before STL export
 
-echo("total_h =", total_h);                          // 15
-echo("top tier w =", base_w - 2 * tier_inset * (tier_count - 1));  // 220
-echo("socket floor =", total_h - socket_depth);      // 3
+echo("total_h =", total_h);
+echo("top tier w =", base_w - 2 * tier_inset * (tier_count - 1));
+echo("socket floor =", total_h - socket_depth);
 
 // ── Geometry ──────────────────────────────────────
 base_plate();
@@ -39,14 +40,30 @@ module base_plate() {
     }
 }
 
-// Three-tier square stepped platform — widest at bottom, each tier steps inward and upward
+// Stepped tiers + raised lip fillet at outer edge of each exposed tread
 module crepidoma() {
+    // Main tier bodies
     for (i = [0 : tier_count - 1]) {
         w = base_w - 2 * tier_inset * i;
         d = base_d - 2 * tier_inset * i;
         z = i * tier_h;
         translate([-w/2, -d/2, z])
             cube([w, d, tier_h]);
+    }
+
+    // Lip: raised ridge running around outer perimeter of each tread
+    // Sits on top surface of tier i, outside the footprint of tier i+1
+    for (i = [0 : tier_count - 2]) {
+        w = base_w - 2 * tier_inset * i;
+        d = base_d - 2 * tier_inset * i;
+        z_tread = (i + 1) * tier_h;  // top surface of tier i
+        translate([-w/2, -d/2, z_tread])
+        difference() {
+            cube([w, d, lip_h]);
+            // hollow out interior, leaving only the outer lip_out strip
+            translate([lip_out, lip_out, -1])
+                cube([w - 2*lip_out, d - 2*lip_out, lip_h + 2]);
+        }
     }
 }
 
