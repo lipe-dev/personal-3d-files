@@ -39,14 +39,14 @@ module base_plate() {
     }
 }
 
-// Three-tier square stepped platform — widest/shortest at bottom, narrowest/tallest at top
+// Three-tier square stepped platform — widest at bottom, each tier steps inward and upward
 module crepidoma() {
     for (i = [0 : tier_count - 1]) {
         w = base_w - 2 * tier_inset * i;
         d = base_d - 2 * tier_inset * i;
-        h = total_h - i * tier_h;
-        translate([-w/2, -d/2, 0])
-            cube([w, d, h]);
+        z = i * tier_h;
+        translate([-w/2, -d/2, z])
+            cube([w, d, tier_h]);
     }
 }
 
