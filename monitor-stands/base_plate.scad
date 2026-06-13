@@ -205,11 +205,12 @@ module layer_sp(w, h, z, sp_r, turns, groove_r, mode=0) {
 module _spiral(cx, cz, face_w, r_out, turns, gr, mirror=false, segs=52) {
     // Single Archimedean spiral. mirror=true reverses winding direction.
     r_in = gr * 1.2;
-    dir  = mirror ? -1 : 1;
+    dir   = mirror ? -1 : 1;
+    start = mirror ? -45 : -135;  // mirrored shell opens the other way
     for (i = [0:segs-1]) {
         t0 = i / segs;  t1 = (i+1) / segs;
-        a0 = -135 + dir * t0 * turns * 360;
-        a1 = -135 + dir * t1 * turns * 360;
+        a0 = start + dir * t0 * turns * 360;
+        a1 = start + dir * t1 * turns * 360;
         rr0 = r_out * (1-t0) + r_in * t0;
         rr1 = r_out * (1-t1) + r_in * t1;
         hull() {
