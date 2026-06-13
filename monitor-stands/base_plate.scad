@@ -22,7 +22,8 @@ step_h          = plate_h / step_count;  // 5mm per step
 step_inset      = 5;     // each step narrows by this much in radius
 
 // Meander border
-meander_r       = plate_d/2 - step_inset * step_count - 10; // inner radius of meander ring
+meander_clearance = 10;  // gap between stepped edge outer rim and meander band
+meander_r       = plate_d/2 - step_inset * step_count - meander_clearance;
 meander_depth   = 1.5;   // how deep meander is engraved
 meander_w       = 6;     // width of meander band
 meander_seg     = 3;     // size of each meander square cell
@@ -40,6 +41,8 @@ base_plate();
 module base_plate() {
     difference() {
         stepped_disc();
+        // socket_holes();   — added in Task 2
+        // meander_ring();   — added in Task 3
     }
 }
 
