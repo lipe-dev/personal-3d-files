@@ -192,7 +192,8 @@ module layer_sp(w, h, z, sp_r, turns, groove_r, mode=0) {
                         cx = -w/2 + sp_r + col*sp_r*2 + hex_offset;
                         cz = z + sp_r + row * row_stride;
                         if (cx > -w/2+sp_r && cx < w/2-sp_r && cz < z+h-groove_r)
-                            _spiral(cx, cz, w, sp_r, turns, groove_r);
+                            _spiral(cx, cz, w, sp_r, turns, groove_r,
+                                    mirror = (col + row) % 2 == 1);
                     }
                 }
     }
@@ -201,12 +202,14 @@ module layer_sp(w, h, z, sp_r, turns, groove_r, mode=0) {
     else           union()      { translate([-w/2,-w/2,z]) cube([w,w,h]); _spirals(); }
 }
 
-module _spiral(cx, cz, face_w, r_out, turns, gr, segs=52) {
-    // Single Archimedean spiral groove on the +Y face, centered at (cx, cz)
-    r_in = gr * 1.2;  // tight inner terminus
+module _spiral(cx, cz, face_w, r_out, turns, gr, mirror=false, segs=52) {
+    // Single Archimedean spiral. mirror=true reverses winding direction.
+    r_in = gr * 1.2;
+    dir  = mirror ? -1 : 1;
     for (i = [0:segs-1]) {
         t0 = i / segs;  t1 = (i+1) / segs;
-        a0 = -135 + t0 * turns * 360;  a1 = -135 + t1 * turns * 360;
+        a0 = -135 + dir * t0 * turns * 360;
+        a1 = -135 + dir * t1 * turns * 360;
         rr0 = r_out * (1-t0) + r_in * t0;
         rr1 = r_out * (1-t1) + r_in * t1;
         hull() {
