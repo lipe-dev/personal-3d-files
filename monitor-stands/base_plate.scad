@@ -18,30 +18,42 @@
 base_w = 270;   // starting width at bottom (square base)
 
 profile = [
-    // ── tier 1 (bottom, euthynteria) ──────────────────────────
-    ["V",  2, 0],            // base fillet
-    ["D",  5, 45],           // 45° chamfer — clean lead-in
-    ["V",  2, 0],            // vertical band
-    ["DT", 9, [9, 6, 3]],      // dentils: 9mm tooth, 6mm gap, 3mm deep
-    ["V",  2, 0],
-    ["SW", 16, [6, 8, 2.8, 3, 0]], // swirl: amp, waves, groove_r, n_grooves, mode(0=sub/1=add)
-    ["V",  2, 0],
-    ["CC", 5, 5],              // concave curve (narrows 10mm total)
+    // ══ DEMO SHOWCASE — all layer types, multiple configs ══════
 
-    // ── tier 2 (middle, stereobate) ───────────────────────────
-    ["V",  3, 0],
-    ["D",  4, 30],           // 30° chamfer — shallower angle, gentler step
-    ["V",  2, 0],
-    ["DT", 7, [7, 5, 2.5]], // smaller dentils
-    ["V",  2, 0],
-    ["SP", 28, [8, 1.5, 1.5, 0]], // spirals: sp_r, turns, groove_r, mode(0=sub/1=add)
-    ["V",  2, 0],
-    ["CC", 4, 4],            // smaller concave curve
+    // ── D: diagonal tapers ─────────────────────────────────────
+    ["V",  2,  0],
+    ["D",  5,  45],               // 45° — classic chamfer
+    ["V",  2,  0],
+    ["D",  5,  30],               // 30° — shallower, more gradual
+    ["V",  2,  0],
 
-    // ── tier 3 (top, stylobate — columns stand here) ──────────
-    ["V",  3, 0],
-    ["D",  3, 45],           // 45° chamfer
-    ["V",  2, 0],
+    // ── DT: dentils — bold then fine ───────────────────────────
+    ["DT", 9,  [11, 7, 3.5]],    // bold: wide teeth, deep cuts
+    ["V",  2,  0],
+    ["DT", 5,  [5,  3, 1.8]],    // fine: tight repeating pattern
+    ["V",  2,  0],
+
+    // ── CC + CV: concave then convex curves ────────────────────
+    ["CC", 6,  6],                // concave — safe to print
+    ["V",  2,  0],
+    ["CV", 5,  5],                // convex — check slicer for overhang
+
+    // ── SW: wave/swirl — subtractive then additive ─────────────
+    ["V",  2,  0],
+    ["SW", 10, [5, 6, 2.5, 2, 0]], // subtractive: 2-strand grooved swirl
+    ["V",  2,  0],
+    ["SW", 10, [4, 5, 2,   3, 1]], // additive:    3-strand raised braid
+
+    // ── SP: spiral shells — subtractive then additive ──────────
+    ["V",  2,  0],
+    ["SP", 20, [7, 1.5, 1.5, 0]], // subtractive: open snail shells carved in
+    ["V",  2,  0],
+    ["SP", 18, [6, 2.0, 1.5, 1]], // additive:    tight 2-turn shells raised out
+
+    // ── close ──────────────────────────────────────────────────
+    ["V",  2,  0],
+    ["D",  4,  45],               // closing chamfer
+    ["V",  2,  0],
 ];
 
 // ── Socket config (set after measuring sourced STLs) ─────────
