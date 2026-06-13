@@ -1,32 +1,40 @@
 // Base plate — Atlas monitor stand
-// Greek crepidoma: 3-tier square stepped platform (euthynteria → stereobate → stylobate)
+// Greek crepidoma: 3-tier square stepped platform
+// Each tier has: base plinth → inset neck → main fascia → crown overhang
 // All dimensions in mm
 
 // Overall geometry
-tier_count      = 3;
-tier_inset      = 15;    // each tier narrows by this much on each side
-tier_h          = 10;    // height of each tier
-lip_h           = 4;     // raised fillet ridge at outer edge of each tread
-lip_out         = 6;     // width of lip strip
-base_w          = 250;   // bottom tier width (square)
-base_d          = 250;   // bottom tier depth (square)
-total_h         = tier_count * tier_h;  // 30mm total
+tier_count   = 3;
+tier_h       = 14;    // total height per tier
+tier_inset   = 18;    // each tier steps inward by this much on each side
+base_w       = 260;   // bottom tier width
+base_d       = 260;   // bottom tier depth
+total_h      = tier_count * tier_h;  // 42mm total
+
+// Per-tier profile
+plinth_out   = 6;     // base plinth protrusion beyond tier width
+plinth_h     = 4;     // base plinth height
+neck_in      = 4;     // neck inset (narrower than main body)
+neck_h       = 3;     // neck height — creates deep shadow line at base of each tier
+fascia_h     = tier_h - plinth_h - neck_h - crown_h;  // main vertical face
+crown_out    = 5;     // crown overhang beyond tier width
+crown_h      = 4;     // crown height — projecting lip at top of each tier
 
 // Triangle socket positions (relative to plate center = triangle centroid)
-rear_span        = 160;   // center-to-center between rear two column sockets
-atlas_y_offset   = 66.7;  // Atlas socket forward of centroid
-rear_y_offset    = -33.3; // rear column sockets behind centroid
+rear_span        = 160;
+atlas_y_offset   = 66.7;
+rear_y_offset    = -33.3;
 
 // Sockets
-socket_depth     = 12;    // how deep the peg sits
-col_socket_d     = 25;    // column peg diameter — adjust after measuring sourced STL
-atlas_socket_d   = 20;    // Atlas peg diameter — adjust after measuring sourced STL
-socket_tol       = 0.3;   // friction-fit tolerance (added to socket diameter)
+socket_depth     = 12;
+col_socket_d     = 25;    // adjust after measuring sourced column STL
+atlas_socket_d   = 20;    // adjust after measuring sourced Atlas STL
+socket_tol       = 0.3;   // friction-fit tolerance
 
 $fn = 80;
-// F5 = fast preview  |  F6 = full render before STL export
 
 echo("total_h =", total_h);
+echo("fascia_h =", tier_h - plinth_h - neck_h - crown_h);
 echo("top tier w =", base_w - 2 * tier_inset * (tier_count - 1));
 echo("socket floor =", total_h - socket_depth);
 
@@ -40,31 +48,35 @@ module base_plate() {
     }
 }
 
-// Stepped tiers + raised lip fillet at outer edge of each exposed tread
 module crepidoma() {
-    // Main tier bodies
     for (i = [0 : tier_count - 1]) {
         w = base_w - 2 * tier_inset * i;
         d = base_d - 2 * tier_inset * i;
         z = i * tier_h;
-        translate([-w/2, -d/2, z])
-            cube([w, d, tier_h]);
+        profiled_tier(w, d, z);
     }
+}
 
-    // Lip: raised ridge running around outer perimeter of each tread
-    // Sits on top surface of tier i, outside the footprint of tier i+1
-    for (i = [0 : tier_count - 2]) {
-        w = base_w - 2 * tier_inset * i;
-        d = base_d - 2 * tier_inset * i;
-        z_tread = (i + 1) * tier_h;  // top surface of tier i
-        translate([-w/2, -d/2, z_tread])
-        difference() {
-            cube([w, d, lip_h]);
-            // hollow out interior, leaving only the outer lip_out strip
-            translate([lip_out, lip_out, -1])
-                cube([w - 2*lip_out, d - 2*lip_out, lip_h + 2]);
-        }
-    }
+// Each tier: plinth → neck → fascia → crown
+// Creates 3 distinct shadow lines per tier for rich classical depth
+module profiled_tier(w, d, z) {
+    fh = tier_h - plinth_h - neck_h - crown_h;  // fascia height
+
+    // Base plinth — wide projecting foot
+    translate([-(w/2 + plinth_out), -(d/2 + plinth_out), z])
+        cube([w + 2*plinth_out, d + 2*plinth_out, plinth_h]);
+
+    // Neck — recessed band, creates deep shadow at base of fascia
+    translate([-(w/2 - neck_in), -(d/2 - neck_in), z + plinth_h])
+        cube([w - 2*neck_in, d - 2*neck_in, neck_h]);
+
+    // Main fascia — vertical face, primary visible surface of tier
+    translate([-w/2, -d/2, z + plinth_h + neck_h])
+        cube([w, d, fh]);
+
+    // Crown — projecting overhang at top, throws shadow on tier below
+    translate([-(w/2 + crown_out), -(d/2 + crown_out), z + plinth_h + neck_h + fh])
+        cube([w + 2*crown_out, d + 2*crown_out, crown_h]);
 }
 
 module socket_holes() {
