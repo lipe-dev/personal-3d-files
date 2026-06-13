@@ -1,35 +1,42 @@
 // Base plate — Atlas monitor stand
 // Greek crepidoma: 3-tier square stepped platform
-// Each tier has: base plinth → inset neck → main fascia → crown overhang
+// Per-tier profile: base plinth → neck → grooved fascia → crown overhang
+// Corners: 45° chamfer on all tiers throughout
 // All dimensions in mm
 
-// Overall geometry
+// ── Overall ──────────────────────────────────────
 tier_count   = 3;
-tier_h       = 14;    // total height per tier
-tier_inset   = 18;    // each tier steps inward by this much on each side
-base_w       = 260;   // bottom tier width
-base_d       = 260;   // bottom tier depth
-total_h      = tier_count * tier_h;  // 42mm total
+tier_h       = 20;     // height per tier (total = 60mm)
+tier_inset   = 20;     // each tier steps inward this much per side
+base_w       = 270;    // bottom tier width
+base_d       = 270;    // bottom tier depth
+total_h      = tier_count * tier_h;
 
-// Per-tier profile
-plinth_out   = 6;     // base plinth protrusion beyond tier width
-plinth_h     = 4;     // base plinth height
-neck_in      = 4;     // neck inset (narrower than main body)
-neck_h       = 3;     // neck height — creates deep shadow line at base of each tier
-fascia_h     = tier_h - plinth_h - neck_h - crown_h;  // main vertical face
-crown_out    = 5;     // crown overhang beyond tier width
-crown_h      = 4;     // crown height — projecting lip at top of each tier
+// ── Per-tier profile ─────────────────────────────
+plinth_h     = 4;      // base plinth (wide)
+plinth_out   = 7;      // how much plinth protrudes beyond tier body
+neck_h       = 3;      // recessed neck — deep shadow at base of fascia
+neck_in      = 5;      // neck inset
+fascia_h     = tier_h - plinth_h - neck_h - crown_h; // computed below
+crown_h      = 5;      // projecting crown lip at top
+crown_out    = 6;      // crown protrusion
 
-// Triangle socket positions (relative to plate center = triangle centroid)
+// ── Corner chamfer ───────────────────────────────
+corner_c     = 18;     // 45° cut on all 4 vertical corners of every element
+
+// ── Perimeter groove bands ───────────────────────
+groove_h     = 2.0;    // height of each horizontal groove
+groove_d     = 2.5;    // depth of groove cut into fascia face
+groove_count = 2;      // two grooves dividing fascia into thirds
+
+// ── Sockets ──────────────────────────────────────
 rear_span        = 160;
 atlas_y_offset   = 66.7;
 rear_y_offset    = -33.3;
-
-// Sockets
-socket_depth     = 12;
+socket_depth     = 15;
 col_socket_d     = 25;    // adjust after measuring sourced column STL
 atlas_socket_d   = 20;    // adjust after measuring sourced Atlas STL
-socket_tol       = 0.3;   // friction-fit tolerance
+socket_tol       = 0.3;
 
 $fn = 80;
 
@@ -38,57 +45,94 @@ echo("fascia_h =", tier_h - plinth_h - neck_h - crown_h);
 echo("top tier w =", base_w - 2 * tier_inset * (tier_count - 1));
 echo("socket floor =", total_h - socket_depth);
 
-// ── Geometry ──────────────────────────────────────
+// ── Geometry ─────────────────────────────────────
 base_plate();
 
 module base_plate() {
     difference() {
-        crepidoma();
+        union() {
+            crepidoma();
+        }
         socket_holes();
+        groove_cuts();
     }
+}
+
+// ─ Chamfered rectangular prism (hull of two cross-rects, centered at origin base) ─
+module cbox(w, d, h, c=corner_c) {
+    hull() {
+        translate([c, 0, 0]) cube([w - 2*c, d, h]);
+        translate([0, c, 0]) cube([w, d - 2*c, h]);
+    }
+}
+
+// ─ Profiled tier: plinth + neck + fascia + crown, all chamfered ─
+module profiled_tier(w, d, z) {
+    fh = tier_h - plinth_h - neck_h - crown_h;
+
+    pw = w + 2*plinth_out;  pd = d + 2*plinth_out;
+    nw = w - 2*neck_in;     nd = d - 2*neck_in;
+    cw = w + 2*crown_out;   cd = d + 2*crown_out;
+
+    // Base plinth — wide projecting foot
+    translate([-pw/2, -pd/2, z])
+        cbox(pw, pd, plinth_h);
+
+    // Neck — recessed band, deep shadow at base of fascia
+    translate([-nw/2, -nd/2, z + plinth_h])
+        cbox(nw, nd, neck_h);
+
+    // Fascia — main vertical face
+    translate([-w/2, -d/2, z + plinth_h + neck_h])
+        cbox(w, d, fh);
+
+    // Crown — projecting overhang, throws shadow on tier below
+    translate([-cw/2, -cd/2, z + plinth_h + neck_h + fh])
+        cbox(cw, cd, crown_h);
 }
 
 module crepidoma() {
     for (i = [0 : tier_count - 1]) {
         w = base_w - 2 * tier_inset * i;
         d = base_d - 2 * tier_inset * i;
-        z = i * tier_h;
-        profiled_tier(w, d, z);
+        profiled_tier(w, d, i * tier_h);
     }
 }
 
-// Each tier: plinth → neck → fascia → crown
-// Creates 3 distinct shadow lines per tier for rich classical depth
-module profiled_tier(w, d, z) {
-    fh = tier_h - plinth_h - neck_h - crown_h;  // fascia height
+// ─ Horizontal groove bands — run full perimeter of each tier's fascia ─
+// Two grooves divide each fascia face into thirds, creating banded look
+module groove_cuts() {
+    for (i = [0 : tier_count - 1]) {
+        w = base_w - 2 * tier_inset * i;
+        d = base_d - 2 * tier_inset * i;
+        fh    = tier_h - plinth_h - neck_h - crown_h;
+        z_fas = i * tier_h + plinth_h + neck_h;  // bottom of fascia
 
-    // Base plinth — wide projecting foot
-    translate([-(w/2 + plinth_out), -(d/2 + plinth_out), z])
-        cube([w + 2*plinth_out, d + 2*plinth_out, plinth_h]);
+        // Two grooves at 1/3 and 2/3 height of fascia
+        for (g = [1 : groove_count]) {
+            gz = z_fas + fh * g / (groove_count + 1) - groove_h / 2;
 
-    // Neck — recessed band, creates deep shadow at base of fascia
-    translate([-(w/2 - neck_in), -(d/2 - neck_in), z + plinth_h])
-        cube([w - 2*neck_in, d - 2*neck_in, neck_h]);
+            // Frame-shaped cut: outer box minus inner box
+            ow = w + 0.2;  od = d + 0.2;
+            iw = w - 2*groove_d;  id = d - 2*groove_d;
 
-    // Main fascia — vertical face, primary visible surface of tier
-    translate([-w/2, -d/2, z + plinth_h + neck_h])
-        cube([w, d, fh]);
-
-    // Crown — projecting overhang at top, throws shadow on tier below
-    translate([-(w/2 + crown_out), -(d/2 + crown_out), z + plinth_h + neck_h + fh])
-        cube([w + 2*crown_out, d + 2*crown_out, crown_h]);
+            translate([-ow/2, -od/2, gz])
+            difference() {
+                cube([ow, od, groove_h]);
+                translate([groove_d, groove_d, -0.1])
+                    cube([iw, id, groove_h + 0.2]);
+            }
+        }
+    }
 }
 
 module socket_holes() {
-    // Rear left column
     translate([-rear_span/2, rear_y_offset, total_h - socket_depth])
         cylinder(d = col_socket_d + socket_tol, h = socket_depth + 1);
 
-    // Rear right column
     translate([rear_span/2, rear_y_offset, total_h - socket_depth])
         cylinder(d = col_socket_d + socket_tol, h = socket_depth + 1);
 
-    // Front Atlas
     translate([0, atlas_y_offset, total_h - socket_depth])
         cylinder(d = atlas_socket_d + socket_tol, h = socket_depth + 1);
 }
