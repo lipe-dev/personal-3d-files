@@ -22,7 +22,7 @@ profile = [
     ["V",  2, 0],            // vertical band
     ["DT", 9, [9, 6, 3]],      // dentils: 9mm tooth, 6mm gap, 3mm deep
     ["V",  2, 0],
-    ["SW", 8, [2, 4, 1.8, 2]], // swirl: 2mm amplitude, 4 waves, 1.8mm groove, 2 interleaved
+    ["SW", 12, [4, 6, 2.2, 2]], // swirl: 4mm amplitude, 6 waves, 2.2mm groove, 2 interleaved
     ["V",  2, 0],
     ["CC", 5, 5],              // concave curve (narrows 10mm total)
 
