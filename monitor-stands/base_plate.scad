@@ -9,8 +9,8 @@
 //   "DT"  dentils                — param = [tooth_w, gap_w, cut_depth]
 //   "SW"  wave/swirl groove      — param = [amplitude, n_waves, groove_r, n_grooves]
 //                                   n_grooves=1 → single wave, =2 → interleaved swirl
-//   "SP"  spiral shells          — param = [spiral_r, turns, groove_r]
-//                                   hex-packed snail shells tiling all 4 faces
+//   "SP"  spiral shells          — param = [spiral_r, turns, groove_r, mode, gap]
+//                                   square grid, alternating mirror, gap=space between shells
 //
 // PRINT CONSTRAINT: profile must only narrow going up (no layer wider than one below).
 // "D" with angle > 45° from horizontal will overhang — use ≤ 45° for support-free print.
@@ -46,9 +46,9 @@ profile = [
 
     // ── SP: spiral shells — subtractive then additive ──────────
     ["V",  2,  0],
-    ["SP", 20, [7, 1.5, 1.5, 0]], // subtractive: open snail shells carved in
+    ["SP", 20, [7, 1.5, 1.5, 0, 3]], // subtractive: sp_r, turns, groove_r, mode, gap
     ["V",  2,  0],
-    ["SP", 18, [6, 2.0, 1.5, 1]], // additive:    tight 2-turn shells raised out
+    ["SP", 18, [6, 2.0, 1.5, 1, 3]], // additive: tight 2-turn shells raised out
 
     // ── close ──────────────────────────────────────────────────
     ["V",  2,  0],
@@ -104,7 +104,7 @@ module profile_stack() {
         else if (t == "CV") layer_cv (w, h, z, p);
         else if (t == "DT") layer_dt (w, h, z, p[0], p[1], p[2]);
         else if (t == "SW") layer_sw (w, h, z, p[0], p[1], p[2], p[3], p[4]);
-        else if (t == "SP") layer_sp (w, h, z, p[0], p[1], p[2], p[3]);
+        else if (t == "SP") layer_sp (w, h, z, p[0], p[1], p[2], p[3], p[4]);
     }
 }
 
@@ -176,26 +176,24 @@ module layer_dt(w, h, z, tw, gw, depth) {
     }
 }
 
-module layer_sp(w, h, z, sp_r, turns, groove_r, mode=0) {
-    // mode 0 = subtractive (grooves cut in), mode 1 = additive (ridges protrude out)
-    // Hex-packed Archimedean spiral shells on all 4 faces.
-    row_stride = sp_r * sqrt(3);
-    rows = max(1, floor(h / row_stride));
+module layer_sp(w, h, z, sp_r, turns, groove_r, mode=0, gap=2) {
+    // Square grid of Archimedean spiral shells, equal spacing in X and Z.
+    // gap = space between spiral edges (like dentil gap). stride = diameter + gap.
+    stride = sp_r * 2 + gap;
+    rows   = max(1, floor((h - sp_r) / stride));
+    cols   = max(1, floor((w - sp_r) / stride));
 
     module _spirals() {
         for (face = [0:3])
             rotate([0, 0, face*90])
-                for (row = [0:rows-1]) {
-                    hex_offset = (row % 2 == 0) ? 0 : sp_r;
-                    cols = floor((w - hex_offset) / (sp_r*2));
-                    for (col = [0:cols]) {
-                        cx = -w/2 + sp_r + col*sp_r*2 + hex_offset;
-                        cz = z + sp_r + row * row_stride;
-                        if (cx > -w/2+sp_r && cx < w/2-sp_r && cz < z+h-groove_r)
+                for (row = [0:rows-1])
+                    for (col = [0:cols-1]) {
+                        cx = -w/2 + sp_r + col * stride;
+                        cz = z   + sp_r + row * stride;
+                        if (cx < w/2 - sp_r && cz < z + h - groove_r)
                             _spiral(cx, cz, w, sp_r, turns, groove_r,
                                     mirror = (col + row) % 2 == 1);
                     }
-                }
     }
 
     if (mode == 0) difference() { translate([-w/2,-w/2,z]) cube([w,w,h]); _spirals(); }
