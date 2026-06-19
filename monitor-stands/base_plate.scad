@@ -83,9 +83,39 @@ band_gr         = 0.5;  // groove radius
 band_turns      = 3;    // meander turns per cell
 band_w          = 9;    // band width
 band_margin     = 14;   // distance from plate edge to band center
-band_border_w   = 0.8;  // flanking groove width
-band_border_d   = 0.5;  // flanking groove depth
+band_border_w   = 0.5;  // flanking groove width (top)
+band_border_d   = 0.35; // flanking groove depth
 band_border_gap = 1.2;  // gap from band edge to groove center
+
+brick_w  = 14;    // brick length
+brick_h  = 7;     // brick height (row spacing)
+brick_lw = 0.4;   // mortar line width (top)
+brick_d  = 0.3;   // mortar line depth
+
+groove_ang = 55;  // trapezoidal groove wall angle from horizontal
+
+
+tile_sp   = 6.0;   // tile line spacing
+tile_lw   = 0.35;  // tile line width (top)
+tile_d    = 0.3;   // tile line depth
+
+// trapezoidal groove primitives — wider at top, narrower at bottom
+module groove_x(x, y, len, w, d) {
+    taper = d / tan(groove_ang);
+    wb = max(0.01, w - 2*taper);
+    hull() {
+        translate([x, y - w/2,  total_h - 0.01]) cube([len, w,  0.01]);
+        translate([x, y - wb/2, total_h - d])     cube([len, wb, 0.01]);
+    }
+}
+module groove_y(x, y, len, w, d) {
+    taper = d / tan(groove_ang);
+    wb = max(0.01, w - 2*taper);
+    hull() {
+        translate([x - w/2,  y, total_h - 0.01]) cube([w,  len, 0.01]);
+        translate([x - wb/2, y, total_h - d])     cube([wb, len, 0.01]);
+    }
+}
 
 difference() {
     profile_stack();
@@ -93,6 +123,8 @@ difference() {
     column_marks();
     column_slab_grooves();
     top_face_bands();
+    brick_floor();
+    margin_tiling();
 }
 
 col_line_w = 0.8;
@@ -128,11 +160,13 @@ module _flat_gk_r(cx, cy, mirror) {  // rotated 90° — hooks open along Y (for
     }
 }
 
-module _flat_gk_hband(x0, x1, y_ctr, u=band_unit) {
-    n = ceil((x1-x0) / u) + 1;
+module _flat_gk_hband(x0, x1, y_ctr, u=band_unit, flip=false, center=false) {
+    span = x1 - x0;
+    n  = center ? floor(span / u) : ceil(span / u) + 1;
+    ox = center ? x0 + (span - n*u)/2 + u/2 : x0 + u/2;
     intersection() {
-        translate([x0, y_ctr-band_w/2, total_h-band_gr-0.1]) cube([x1-x0, band_w, band_gr*3]);
-        union() for (c=[0:n-1]) _flat_gk(x0+u/2+c*u, y_ctr, c%2==1, u);
+        translate([x0, y_ctr-band_w/2, total_h-band_gr-0.1]) cube([span, band_w, band_gr*3]);
+        union() for (c=[0:n-1]) _flat_gk(ox+c*u, y_ctr, flip ? c%2==0 : c%2==1, u);
     }
 }
 
@@ -148,16 +182,14 @@ module _hborders(x0, x1, y_ctr, extend=true) {
     ext = extend ? band_w/2 + band_border_gap + band_border_w : 0;
     off = band_w/2 + band_border_gap;
     for (dy = [-off, off])
-        translate([x0-ext, y_ctr+dy-band_border_w/2, total_h-band_border_d])
-            cube([x1-x0+2*ext, band_border_w, band_border_d+0.1]);
+        groove_x(x0-ext, y_ctr+dy, x1-x0+2*ext, band_border_w, band_border_d);
 }
 
-module _vborders(x_ctr, y0, y1) {
-    ext = band_w/2 + band_border_gap + band_border_w;
+module _vborders(x_ctr, y0, y1, extend=true) {
+    ext = extend ? band_w/2 + band_border_gap + band_border_w : 0;
     off = band_w/2 + band_border_gap;
     for (dx = [-off, off])
-        translate([x_ctr+dx-band_border_w/2, y0-ext, total_h-band_border_d])
-            cube([band_border_w, y1-y0+2*ext, band_border_d+0.1]);
+        groove_y(x_ctr+dx, y0-ext, y1-y0+2*ext, band_border_w, band_border_d);
 }
 
 module top_face_bands() {
@@ -198,27 +230,135 @@ module top_face_bands() {
         }
     }
 
-    fi  = 79/2 + 3;     // front inner bound: clear of pedestal footprint
+    fi  = 79/2 + 2;     // front inner bound: just clear of pedestal
     fo  = top_w/2 - 3;  // front outer bound: near plate edge
 
     intersection() {
         _clip();
         union() {
-            _flat_gk_hband(-side_x, side_x, back_y);
-            _hborders(-side_x, side_x, back_y);
-            for (sx = [-1, 1]) {
-                _flat_gk_vband(sx*side_x, back_y, front_y - cc);
-                _vborders(sx*side_x, back_y, front_y - cc);
-            }
+            _flat_gk_hband(-side_x, side_x, back_y, center=true);
+            _flat_gk_vband(side_x, back_y, front_y - cc);
+            mirror([1,0,0]) _flat_gk_vband(side_x, back_y, front_y - cc);
         }
     }
 
     intersection() {
         _clip_front();
-        union() for (sx = [-1, 1]) {
-            _flat_gk_hband(min(sx*fi,sx*fo), max(sx*fi,sx*fo), front_y);
-            _hborders(min(sx*fi,sx*fo), max(sx*fi,sx*fo), front_y, extend=false);
+        union() {
+            _flat_gk_hband(fi, fo, front_y);
+            mirror([1,0,0]) _flat_gk_hband(fi, fo, front_y);
         }
+    }
+
+    // border grooves — unclipped so they extend to touch neighbors
+    boff   = band_w/2 + band_border_gap;
+    slab_x = col_offset - col_slab_s/2 - col_groove_w;  // inner slab groove X edge
+    _hborders(-slab_x, slab_x, back_y, extend=false);
+    for (sx = [-1, 1]) {
+        slab_y = -col_offset + col_slab_s/2 + col_groove_w;
+        _vborders(sx*side_x, slab_y, front_y - boff, extend=false);
+    }
+    _hborders(fi, fo, front_y);
+    mirror([1,0,0]) _hborders(fi, fo, front_y);
+}
+
+module brick_floor() {
+    hw  = top_w/2;
+    gap = 2;
+    sc  = col_slab_s/2 + col_groove_w + gap;
+    cc  = band_w/2 + band_border_gap + band_border_w + gap;
+    side_x  =  hw - band_margin;
+    back_y  = -(hw - band_margin);
+    front_y =  hw - band_margin;
+
+    boff = band_w/2 + band_border_gap;
+    // visible area for centering
+    vx0 = -side_x + boff;  vx1 = side_x - boff;
+    vy0 = back_y + boff;   vy1 = front_y - boff;
+    vw = vx1 - vx0;  vh = vy1 - vy0;
+
+    n_rows = floor(vh / brick_h);
+    n_cols = floor(vw / brick_w);
+    oy = vy0 + (vh - n_rows * brick_h) / 2;
+    ox = vx0 + (vw - n_cols * brick_w) / 2;
+
+    module _mortar() {
+        for (r = [-1:n_rows+1])
+            groove_x(vx0, oy + r*brick_h, vw, brick_lw, brick_d);
+        for (r = [-1:n_rows])
+            for (c = [-1:n_cols+1]) {
+                off = (((r % 2) + 2) % 2 == 1) ? brick_w/2 : 0;
+                groove_y(ox + c*brick_w + off, oy + r*brick_h, brick_h, brick_lw, brick_d);
+            }
+    }
+
+    intersection() {
+        difference() {
+            translate([vx0, vy0, total_h - brick_d - 0.1])
+                cube([vw, vh, brick_d + 0.3]);
+            // exclude column slab zones (tight to groove edge)
+            slab_clip = col_slab_s/2 + col_groove_w;
+            for (sx = [-1, 1])
+                translate([sx*col_offset - slab_clip, -col_offset - slab_clip, total_h - brick_d - 1])
+                    cube([2*slab_clip, 2*slab_clip, brick_d + 3]);
+        }
+        _mortar();
+    }
+}
+
+module margin_tiling() {
+    hw      = top_w/2;
+    bext    = band_w/2 + band_border_gap;  // stop at border groove center
+    side_x  = hw - band_margin;
+    back_y  = -(hw - band_margin);
+    front_y =  hw - band_margin;
+    gap     = 2;
+    sc      = col_slab_s/2 + col_groove_w + gap;
+    ped_s   = 79/2 + gap;  // pedestal half-size + clearance
+
+    module _all_lines() {
+        // side margins — centered in visible range (after slab exclusion)
+        slab_top = -col_offset + col_slab_s/2 + col_groove_w + gap;
+        for (sx = [-1, 1]) {
+            xmin = min(sx*(side_x + bext), sx*hw);
+            xmax = max(sx*(side_x + bext), sx*hw);
+            w = xmax - xmin;
+            sy0 = slab_top;
+            sy1 = front_y - bext;
+            span = sy1 - sy0;
+            n = floor(span / tile_sp);
+            oy = sy0 + (span - n*tile_sp) / 2;
+            for (i = [0:n])
+                groove_x(xmin, oy + i*tile_sp, w, tile_lw, tile_d);
+        }
+        // back margin — centered
+        bw = abs(back_y - bext - (-hw));
+        bx0 = -hw;
+        bspan = top_w;
+        n_back = floor(bspan / tile_sp);
+        obx = bx0 + (bspan - n_back*tile_sp) / 2;
+        for (i = [0:n_back])
+            groove_y(obx + i*tile_sp, -hw, bw, tile_lw, tile_d);
+        // front margin — centered, stop before side band borders
+        fw = abs(hw - (front_y + bext));
+        fx0 = -(side_x + bext);
+        fx1 = side_x + bext;
+        fspan = fx1 - fx0;
+        n_front = floor(fspan / tile_sp);
+        ofx = fx0 + (fspan - n_front*tile_sp) / 2;
+        for (i = [0:n_front])
+            groove_y(ofx + i*tile_sp, front_y + bext, fw, tile_lw, tile_d);
+    }
+
+    difference() {
+        _all_lines();
+        // exclude column slab zones
+        for (sx = [-1, 1])
+            translate([sx*col_offset - sc, -col_offset - sc, total_h - tile_d - 1])
+                cube([2*sc, 2*sc, tile_d + 3]);
+        // exclude pedestal zone
+        translate([-ped_s, ped_cy - ped_s, total_h - tile_d - 1])
+            cube([2*ped_s, 2*ped_s, tile_d + 3]);
     }
 }
 
