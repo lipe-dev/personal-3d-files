@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 210 297">
+  <rect width="210" height="297" fill="#d9dde3"/>
+  <path fill="#fff" stroke="#333" stroke-width=".3" fill-rule="evenodd" d="M0 0H210V297H0Z M141 148.5A36 36 0 1 0 69 148.5A36 36 0 1 0 141 148.5Z"/>
+  <g stroke="#c00" stroke-width=".3">
+    <path d="M69 148.5H141" stroke-dasharray="1.5 1"/>
+    <path d="M69 145.5V151.5M141 145.5V151.5"/>
+    <path d="M0 20H210M.15 16.5V23.5M209.85 16.5V23.5"/>
+    <path d="M20 0V297M16.5 .15H23.5M16.5 296.85H23.5"/>
+  </g>
+  <g font-family="Arial, sans-serif" font-size="5" fill="#c00" text-anchor="middle">
+    <text x="105" y="146.5">72 mm</text>
+    <text x="105" y="18">210 mm</text>
+    <text transform="translate(18 148.5) rotate(-90)">297 mm</text>
+  </g>
+</svg>
