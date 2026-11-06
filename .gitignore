@@ -1,1 +1,6 @@
 BOSL2/
+*.gcode
+*.gcode.3mf
+*.FCBak
+**/exports/wip/
+*Zone.Identifier
