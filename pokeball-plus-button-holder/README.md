@@ -4,6 +4,7 @@ A screw clamp that keeps the top button of a Pokéball Plus pressed. It has a th
 
 - `assembly.scad`: full assembly (uses `plunger.scad`)
 - `plunger.scad`, `shell.scad`, `ball.scad`: parts and helpers
+- Plunger: a hollow M12 thumbscrew with a captive inner shaft (`plunger_inner_shaft()`, a straight step from the body to the cap). It beat a 45° cone variant in print tests.
 - `exports/wip/`: local STL/3MF/AMF exports (not committed)
 
 ## Dependencies

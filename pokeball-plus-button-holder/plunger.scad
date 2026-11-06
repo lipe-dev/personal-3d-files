@@ -75,22 +75,9 @@ shaft_cap_h  = 2;
 shaft_body_d = shaft_bore_d - 0.4; // 5.6 — slides through bore
 body_h       = 11;
 
+// Straight step from body to cap (won the A/B test vs a 45° cone, 2026-11-06;
+// the cone variant is in git history).
 module plunger_inner_shaft() {
-    cone_h = (shaft_cap_d - shaft_body_d) / 2;  // 45° self-supporting angle
-    cylinder(d = shaft_body_d, h = body_h);
-    translate([0, 0, body_h])
-        cylinder(d1 = shaft_body_d, d2 = shaft_cap_d, h = cone_h);
-    translate([0, 0, body_h + cone_h]) {
-        lens_r = (pow(shaft_cap_d/2, 2) + pow(shaft_cap_h, 2)) / (2 * shaft_cap_h);
-        intersection() {
-            translate([0, 0, -(lens_r - shaft_cap_h)])
-                sphere(r = lens_r);
-            cylinder(d = shaft_cap_d * 2, h = shaft_cap_h + 0.01);
-        }
-    }
-}
-
-module plunger_inner_shaft_no_cone() {
     cylinder(d = shaft_body_d, h = body_h);
     translate([0, 0, body_h]) {
         lens_r = (pow(shaft_cap_d/2, 2) + pow(shaft_cap_h, 2)) / (2 * shaft_cap_h);

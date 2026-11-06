@@ -12,7 +12,7 @@ One-off 3D printing projects, mostly OpenSCAD. Each folder is a separate project
 | `hotwheels-base/` | Hot Wheels display base | FreeCAD |
 | `hotwheels-drift/` | Hot Wheels drift band and cylinder | OpenSCAD |
 | `monitor-stands/` | "Atlas" monitor stands: stepped plinth base plate, pedestal, ceiling plate, alignment peg, profile demo. Done: current version printed. | OpenSCAD |
-| `pokeball-plus-button-holder/` | Screw clamp that keeps the Pokéball Plus button pressed (needs BOSL2) | OpenSCAD |
+| `pokeball-plus-button-holder/` | Screw clamp that keeps the Pokéball Plus button pressed, with a hollow screw and a straight-step plunger shaft (needs BOSL2) | OpenSCAD |
 | `table-supports/` | Table support | OpenSCAD |
 | `table-top/` | Table top | OpenSCAD |
 | `workshop-tools/` | Saw tooth covers (dozuki, ryoba), dishwasher drain parts, hose coupler, pipe adapter, sink hose clip, toolbox latch, vise screw pad | OpenSCAD |

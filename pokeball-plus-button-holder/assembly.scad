@@ -95,14 +95,10 @@ if (PART == "preview") {
     translate([0, 70, 14])
         rotate([180, 0, 0])
             plunger_screw();
-    // Plunger shaft with cone
+    // Plunger shaft (straight step, cap up)
     color("White")
-    translate([35, 70, 0])
+    translate([45, 70, 0])
         plunger_inner_shaft();
-    // Plunger shaft without cone
-    color("White")
-    translate([55, 70, 0])
-        plunger_inner_shaft_no_cone();
     // Pad — flat on bed
     color("White")
     translate([90, 70, 0])
