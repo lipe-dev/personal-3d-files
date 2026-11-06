@@ -117,11 +117,13 @@ module groove_y(x, y, len, w, d) {
     }
 }
 
+
 difference() {
     profile_stack();
     peg_holes_top();
     column_marks();
     column_slab_grooves();
+    pedestal_groove();
     top_face_bands();
     brick_floor();
     margin_tiling();
@@ -230,7 +232,8 @@ module top_face_bands() {
         }
     }
 
-    fi  = 79/2 + 2;     // front inner bound: just clear of pedestal
+    fi  = 79/2 + 9;     // front border inner bound
+    fim = 79/2 + 6;     // front meander inner bound (extends further)
     fo  = top_w/2 - 3;  // front outer bound: near plate edge
 
     intersection() {
@@ -245,8 +248,8 @@ module top_face_bands() {
     intersection() {
         _clip_front();
         union() {
-            _flat_gk_hband(fi, fo, front_y);
-            mirror([1,0,0]) _flat_gk_hband(fi, fo, front_y);
+            _flat_gk_hband(fim, fo, front_y);
+            mirror([1,0,0]) _flat_gk_hband(fim, fo, front_y);
         }
     }
 
@@ -260,6 +263,27 @@ module top_face_bands() {
     }
     _hborders(fi, fo, front_y);
     mirror([1,0,0]) _hborders(fi, fo, front_y);
+}
+
+module pedestal_groove() {
+    cd    = col_groove_d;
+    taper = cd / tan(col_groove_ang);
+    ps    = 79 + 2*2;  // pedestal footprint + 2mm gap each side
+    otop  = ps + 2*col_groove_w;
+    obot  = otop - 2*taper;
+    itop  = ps;
+    ibot  = ps + 2*taper;
+    translate([0, ped_cy, total_h - cd])
+        difference() {
+            hull() {
+                translate([-otop/2, -otop/2,  cd  ]) cube([otop, otop, 0.01]);
+                translate([-obot/2, -obot/2, -0.01]) cube([obot, obot, 0.01]);
+            }
+            hull() {
+                translate([-itop/2, -itop/2,  cd  ]) cube([itop, itop, 0.01]);
+                translate([-ibot/2, -ibot/2, -0.1 ]) cube([ibot, ibot, 0.01]);
+            }
+        }
 }
 
 module brick_floor() {
@@ -296,11 +320,15 @@ module brick_floor() {
         difference() {
             translate([vx0, vy0, total_h - brick_d - 0.1])
                 cube([vw, vh, brick_d + 0.3]);
-            // exclude column slab zones (tight to groove edge)
+            // exclude column slab zones
             slab_clip = col_slab_s/2 + col_groove_w;
             for (sx = [-1, 1])
                 translate([sx*col_offset - slab_clip, -col_offset - slab_clip, total_h - brick_d - 1])
                     cube([2*slab_clip, 2*slab_clip, brick_d + 3]);
+            // exclude pedestal zone
+            ped_clip = 79/2 + 2;
+            translate([-ped_clip, ped_cy - ped_clip, total_h - brick_d - 1])
+                cube([2*ped_clip, 2*ped_clip, brick_d + 3]);
         }
         _mortar();
     }
@@ -308,16 +336,16 @@ module brick_floor() {
 
 module margin_tiling() {
     hw      = top_w/2;
-    bext    = band_w/2 + band_border_gap;  // stop at border groove center
+    bext    = band_w/2 + band_border_gap;
     side_x  = hw - band_margin;
     back_y  = -(hw - band_margin);
     front_y =  hw - band_margin;
     gap     = 2;
     sc      = col_slab_s/2 + col_groove_w + gap;
-    ped_s   = 79/2 + gap;  // pedestal half-size + clearance
+    ped_s   = 79/2 + gap;
 
     module _all_lines() {
-        // side margins — centered in visible range (after slab exclusion)
+        // side margins — superficial surface grooves
         slab_top = -col_offset + col_slab_s/2 + col_groove_w + gap;
         for (sx = [-1, 1]) {
             xmin = min(sx*(side_x + bext), sx*hw);
@@ -331,7 +359,7 @@ module margin_tiling() {
             for (i = [0:n])
                 groove_x(xmin, oy + i*tile_sp, w, tile_lw, tile_d);
         }
-        // back margin — centered
+        // back margin
         bw = abs(back_y - bext - (-hw));
         bx0 = -hw;
         bspan = top_w;
@@ -339,7 +367,7 @@ module margin_tiling() {
         obx = bx0 + (bspan - n_back*tile_sp) / 2;
         for (i = [0:n_back])
             groove_y(obx + i*tile_sp, -hw, bw, tile_lw, tile_d);
-        // front margin — centered, stop before side band borders
+        // front margin
         fw = abs(hw - (front_y + bext));
         fx0 = -(side_x + bext);
         fx1 = side_x + bext;
