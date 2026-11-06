@@ -8,10 +8,10 @@ One-off 3D printing projects, mostly OpenSCAD. Each folder is a separate project
 | `adaptador-27mm-25mm/` | Pipe bushing, 27 mm OD to 25 mm ID | OpenSCAD |
 | `arcade-modulo-engate/` | Cradle and latch for the swappable lever/stickless module of an arcade controller | OpenSCAD |
 | `bandeirante-parts/` | Toyota Bandeirante parts: turn-signal lamp holder, grommets, base disc | OpenSCAD |
-| `gopro-holder/` | GoPro-to-phone-gimbal adapter with counterweight | OpenSCAD |
+| `gopro-holder/` | GoPro-to-phone-gimbal adapter with counterweight. **Archived:** the balance revision didn't work out; project abandoned. | OpenSCAD |
 | `hotwheels-base/` | Hot Wheels display base | FreeCAD |
 | `hotwheels-drift/` | Hot Wheels drift band and cylinder | OpenSCAD |
-| `monitor-stands/` | "Atlas" monitor stands: stepped plinth base plate, pedestal, ceiling plate, alignment peg, profile demo | OpenSCAD |
+| `monitor-stands/` | "Atlas" monitor stands: stepped plinth base plate, pedestal, ceiling plate, alignment peg, profile demo. Done: current version printed. | OpenSCAD |
 | `pokeball-plus-button-holder/` | Screw clamp that keeps the Pokéball Plus button pressed (needs BOSL2) | OpenSCAD |
 | `table-supports/` | Table support | OpenSCAD |
 | `table-top/` | Table top | OpenSCAD |
