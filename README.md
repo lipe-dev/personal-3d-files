@@ -15,7 +15,7 @@ One-off 3D printing projects, mostly OpenSCAD. Each folder is a separate project
 | `pokeball-plus-button-holder/` | Screw clamp that keeps the Pokéball Plus button pressed, with a hollow screw and a straight-step plunger shaft (needs BOSL2) | OpenSCAD |
 | `table-supports/` | Table support | OpenSCAD |
 | `table-top/` | Table top | OpenSCAD |
-| `workshop-tools/` | Saw tooth covers (dozuki, ryoba), dishwasher drain parts, hose coupler, pipe adapter, sink hose clip, toolbox latch, vise screw pad | OpenSCAD |
+| `workshop-tools/` | Saw tooth covers (dozuki, ryoba), dishwasher drain parts, hose coupler, pipe adapter, sink hose clip, toolbox latch, vise screw pad, adjustable scarf joint marking jig | OpenSCAD |
 | `docs/` | Design notes and specs (pokeball, gopro) | Markdown |
 
 `makeup-organizer/` moved to [lipe-dev/tray-sure](https://github.com/lipe-dev/tray-sure).
